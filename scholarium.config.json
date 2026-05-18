@@ -1,0 +1,213 @@
+{
+  "project": {
+    "name": "论文撰写小助手",
+    "description": "Multi-agent academic paper writing system"
+  },
+  "paths": {
+    "root": ".",
+    "sections": "sections",
+    "bible": "bible",
+    "citations": "citations",
+    "output": "output",
+    "templates": "templates"
+  },
+  "llm": {
+    "providers": {
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com/v1",
+        "apiKey": "${DEEPSEEK_API_KEY}",
+        "models": [
+          "deepseek-v4-flash",
+          "deepseek-v4-pro"
+        ]
+      },
+      "openai": {
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKey": "",
+        "models": [
+          "gpt-4o",
+          "gpt-4o-mini"
+        ]
+      },
+      "anthropic": {
+        "baseUrl": "https://api.anthropic.com/v1",
+        "apiKey": ""
+      }
+    },
+    "models": {
+      "cartographer": {
+        "agent": "cartographer",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.7,
+        "taskType": "creative"
+      },
+      "radar": {
+        "agent": "radar",
+        "model": "deepseek-v4-flash",
+        "temperature": 0.3,
+        "taskType": "factual"
+      },
+      "planner": {
+        "agent": "planner",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.2,
+        "taskType": "factual"
+      },
+      "architect": {
+        "agent": "architect",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.3,
+        "taskType": "factual"
+      },
+      "writer": {
+        "agent": "writer",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.1,
+        "taskType": "factual"
+      },
+      "observer": {
+        "agent": "observer",
+        "model": "deepseek-v4-flash",
+        "temperature": 0,
+        "taskType": "extraction"
+      },
+      "normalizer": {
+        "agent": "normalizer",
+        "model": "deepseek-v4-flash",
+        "temperature": 0.2,
+        "taskType": "factual"
+      },
+      "governor": {
+        "agent": "governor",
+        "model": "deepseek-v4-flash",
+        "temperature": 0,
+        "taskType": "audit"
+      },
+      "auditor": {
+        "agent": "auditor",
+        "model": "deepseek-v4-pro",
+        "temperature": 0,
+        "taskType": "audit"
+      },
+      "antiAiDetector": {
+        "agent": "antiAiDetector",
+        "model": "deepseek-v4-flash",
+        "temperature": 0,
+        "taskType": "audit"
+      },
+      "antiAiRewriter": {
+        "agent": "antiAiRewriter",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.3,
+        "taskType": "creative"
+      },
+      "librarian": {
+        "agent": "librarian",
+        "model": "deepseek-v4-flash",
+        "temperature": 0,
+        "taskType": "factual"
+      },
+      "citationGenerator": {
+        "agent": "citationGenerator",
+        "model": "deepseek-v4-flash",
+        "temperature": 0.3,
+        "taskType": "creative"
+      },
+      "socraticMentor": {
+        "agent": "socraticMentor",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.7,
+        "taskType": "creative"
+      },
+      "researchQuestion": {
+        "agent": "researchQuestion",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.3,
+        "taskType": "factual"
+      },
+      "methodology": {
+        "agent": "methodology",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.2,
+        "taskType": "factual"
+      },
+      "fieldAnalyst": {
+        "agent": "fieldAnalyst",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.3,
+        "taskType": "factual"
+      },
+      "editorInChief": {
+        "agent": "editorInChief",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.2,
+        "taskType": "audit"
+      },
+      "methodologyReviewer": {
+        "agent": "methodologyReviewer",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.1,
+        "taskType": "audit"
+      },
+      "domainReviewer": {
+        "agent": "domainReviewer",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.2,
+        "taskType": "audit"
+      },
+      "perspectiveReviewer": {
+        "agent": "perspectiveReviewer",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.3,
+        "taskType": "audit"
+      },
+      "devilsAdvocate": {
+        "agent": "devilsAdvocate",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.4,
+        "taskType": "audit"
+      },
+      "editorialSynthesizer": {
+        "agent": "editorialSynthesizer",
+        "model": "deepseek-v4-pro",
+        "temperature": 0.2,
+        "taskType": "audit"
+      }
+    },
+    "fallbacks": {
+      "writer": {
+        "primary": "deepseek-v4-pro",
+        "fallback": [
+          "deepseek-v4-flash"
+        ],
+        "allowDegraded": true
+      },
+      "auditor": {
+        "primary": "deepseek-v4-pro",
+        "fallback": [
+          "deepseek-v4-flash"
+        ],
+        "allowDegraded": false
+      }
+    }
+  },
+  "bible": {
+    "categories": [
+      "data",
+      "terminology",
+      "citations",
+      "experiments",
+      "formulas",
+      "claims",
+      "figures",
+      "variables",
+      "arguments"
+    ],
+    "requireApproval": false
+  },
+  "pipeline": {
+    "maxAuditRounds": 3,
+    "maxAntiAiRounds": 3,
+    "humanReviewTimeout": 3600000
+  }
+}
