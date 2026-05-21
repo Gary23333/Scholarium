@@ -14,7 +14,7 @@ export function registerBibleRoutes(
 ): void {
   register('GET', /^\/api\/bible\/[^/]+$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/').pop()!;
+    const paperId = decodeURIComponent(url.pathname.split('/').pop()!);
     const entries = ctx.bible.getEntries(paperId);
     const stats = ctx.bible.getStats(paperId);
     json(res, { entries, stats });
@@ -22,7 +22,7 @@ export function registerBibleRoutes(
 
   register('POST', /^\/api\/bible\/[^/]+\/entries$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     if (!ctx.papers.has(paperId)) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
     const { category, key, value, confidence, approvalStatus } = b;
@@ -42,8 +42,8 @@ export function registerBibleRoutes(
 
   register('PUT', /^\/api\/bible\/[^/]+\/entries\/[^/]+$/, async (req, res) => {
     const parts = new URL((req as any).url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const entryId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const entryId = decodeURIComponent(parts[5]);
     if (!ctx.papers.has(paperId)) return error(res, 'Paper not found', 404);
     const existing = ctx.db.getBibleEntry(entryId);
     if (!existing || existing.paper_id !== paperId) return error(res, 'Bible entry not found', 404);
@@ -73,8 +73,8 @@ export function registerBibleRoutes(
 
   register('DELETE', /^\/api\/bible\/[^/]+\/entries\/[^/]+$/, async (_req, res) => {
     const parts = new URL((_req as any).url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const entryId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const entryId = decodeURIComponent(parts[5]);
     if (!ctx.papers.has(paperId)) return error(res, 'Paper not found', 404);
     const existing = ctx.db.getBibleEntry(entryId);
     if (!existing || existing.paper_id !== paperId) return error(res, 'Bible entry not found', 404);

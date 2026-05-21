@@ -211,12 +211,12 @@ Full API reference: [API Overview](https://github.com/Gary23333/Scholarium#readm
 
 | Change | Description |
 |--------|-------------|
-| 🏗️ **Modular server architecture** | server.ts reduced from 2276 → 325 lines, split into independent modules |
-| 🛣️ **14 route modules** | Clean separation of concerns, each route independently maintainable |
+| 🏗️ **Modular server architecture** | server.ts reduced from 2276 → 327 lines, split into independent modules |
+| 🛣️ **15 route modules** | Clean separation of concerns, each route independently maintainable |
 | 🚨 **Unified error handling** | AppError hierarchy with consistent error response format |
 | 💚 **Health check endpoints** | `/api/health` + `/api/health/ready` readiness probes |
 | 🔍 **ESLint + Prettier** | ESLint 9+ (typescript-eslint) + Prettier for consistent code style |
-| 🧪 **Vitest test suite** | 72 test cases covering core logic |
+| 🧪 **Vitest test suite** | 88 test cases covering core logic |
 | ⚙️ **GitHub Actions CI/CD** | Automated build, lint, and test pipeline |
 | 📐 **TypeScript strict mode** | Strict mode enabled with Node.js type definitions |
 

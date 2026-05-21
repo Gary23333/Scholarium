@@ -2,7 +2,7 @@
 // Scans journal requirements and recommends best-fit target
 
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface JournalProfile {
   name: string;

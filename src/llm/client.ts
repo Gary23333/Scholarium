@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 // Scholarium LLM Client — OpenAI-compatible protocol with retry
 export interface LLMClientConfig {
   apiKey: string;

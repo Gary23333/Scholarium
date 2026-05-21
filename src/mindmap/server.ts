@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { CartographerAgent } from '../agents/cartographer.ts';
 import type { MindMapNode, CartographerInput } from '../agents/cartographer.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface MindMapSession {
   id: string;

@@ -8,7 +8,7 @@ import type {
 } from '../types/index.ts';
 import { detect } from './detector.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 // Based on Tsinghua PDF guidelines: "删除高度概括和冗余的词句"
 // Replace vague AI filler phrases with more direct academic expressions

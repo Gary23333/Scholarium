@@ -1,7 +1,7 @@
 import { BaseAgent } from './base.ts';
 import type { AgentOptions, ConfirmedFocus, JournalProfile, PaperOutline } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface PlannerInput {
   confirmedFocus: ConfirmedFocus;

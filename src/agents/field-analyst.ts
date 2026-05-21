@@ -2,7 +2,7 @@
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import type { ReviewerConfigCard, ReviewerConfig } from '../types/index.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface FieldAnalystInput {
   paperContent: string;

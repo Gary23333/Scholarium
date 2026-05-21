@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
+import { handleRouteError } from '../middleware/error-handler.ts';
 
 type IntegrityContext = Pick<ServerContext, 'integrityGate' | 'papers' | 'db' | 'hasLLMFor'>;
 
@@ -14,7 +15,7 @@ export function registerIntegrityRoutes(
 ): void {
   register('POST', /^\/api\/integrity\/[^/]+\/gate$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     const paper = ctx.papers.get(paperId) ?? ctx.db.getPaper(paperId);
     if (!paper) return error(res, 'Paper not found', 404);
 
@@ -40,14 +41,14 @@ export function registerIntegrityRoutes(
         mockMode: !ctx.hasLLMFor('auditor'),
       });
       json(res, result);
-    } catch (e: any) {
-      error(res, e.message, 500);
+    } catch (e: unknown) {
+      handleRouteError(e, res);
     }
   });
 
   register('POST', /^\/api\/integrity\/[^/]+\/audit-claims$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     const sections = ctx.db.getPaperSections(paperId);
     const paperContent = sections
       .map((s: any) => s.content_tex)
@@ -59,8 +60,8 @@ export function registerIntegrityRoutes(
     try {
       const result = await ctx.integrityGate.auditClaims(paperContent, references);
       json(res, result);
-    } catch (e: any) {
-      error(res, e.message, 500);
+    } catch (e: unknown) {
+      handleRouteError(e, res);
     }
   });
 }

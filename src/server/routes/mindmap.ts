@@ -4,7 +4,8 @@ import type { MindMapNode, CartographerInput } from '../../agents/cartographer.t
 import type { ServerContext, MindMapSession } from '../context.ts';
 import { json, error, parseBody, now } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
-import { logger } from '../../utils/logger.js';
+import { handleRouteError } from '../middleware/error-handler.ts';
+import { logger } from '../../utils/logger.ts';
 
 type MindmapRouteContext = Pick<ServerContext, 'mmSessions' | 'sseClients' | 'cartographer' | 'db' | 'router' | 'hasLLMFor'>;
 
@@ -94,7 +95,7 @@ export function registerMindmapRoutes(
       logger.error('[MindMap] Cartographer failed:', e);
       taskManager.fail(task.id, e.message);
       mmSSESend(ctx.sseClients, b.sessionId, { type: 'error', message: e.message, ts: now() });
-      throw e;
+      handleRouteError(e, res);
     }
   });
 
@@ -133,7 +134,7 @@ export function registerMindmapRoutes(
 
   register('GET', /^\/api\/mindmap\/sse\/[^/]+$/, async (req, res) => {
     const p = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const sid = p[p.length - 1];
+    const sid = decodeURIComponent(p[p.length - 1]);
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
     res.write('data: {"type":"connected"}\n\n');
     const arr = ctx.sseClients.get(sid) ?? [];
@@ -162,7 +163,7 @@ export function registerMindmapRoutes(
 
   register('GET', /^\/api\/mindmap\/sessions\/[^/]+$/, async (req, res) => {
     const p = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const id = p[p.length - 1];
+    const id = decodeURIComponent(p[p.length - 1]);
     const s = ctx.mmSessions.get(id);
     if (!s) return error(res, 'Session not found', 404);
     json(res, {
@@ -179,7 +180,7 @@ export function registerMindmapRoutes(
 
   register('DELETE', /^\/api\/mindmap\/sessions\/[^/]+$/, async (req, res) => {
     const p = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const id = p[p.length - 1];
+    const id = decodeURIComponent(p[p.length - 1]);
     if (!ctx.mmSessions.has(id)) return error(res, 'Session not found', 404);
     ctx.mmSessions.delete(id);
     ctx.db.deleteMindMapSession(id);

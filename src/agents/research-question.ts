@@ -1,7 +1,7 @@
 // Research Question Agent — Generate RQ Brief with FINER scoring
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import type { ResearchBrief, FinerScore, SocraticTurn } from '../types/index.ts';
 
 export interface RQAgentInput {

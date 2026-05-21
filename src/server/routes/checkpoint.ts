@@ -14,7 +14,7 @@ export function registerCheckpointRoutes(
 ): void {
   register('GET', /^\/api\/checkpoint\/[^/]+$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     const checkpoint = ctx.checkpointManager.getActiveCheckpoint(paperId);
     if (!checkpoint) return json(res, { active: false });
     json(res, { active: true, checkpoint, message: ctx.checkpointManager.generateCheckpointMessage(checkpoint) });
@@ -22,7 +22,7 @@ export function registerCheckpointRoutes(
 
   register('POST', /^\/api\/checkpoint\/[^/]+\/confirm$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     ctx.checkpointManager.confirmCheckpoint(paperId);
     json(res, { ok: true });
   });

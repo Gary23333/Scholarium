@@ -149,9 +149,8 @@ export function registerLlmRoutes(
       taskManager.updateProgress(task.id, 30, '正在翻译...');
       const sysPrompt = `You are a professional translator. Translate the following text from ${sourceLang || 'auto-detect'} to ${targetLang || '中文'}. Output ONLY the translated text, no explanations.`;
       const userPrompt = text;
-      const provider =
-        ctx.config.llm.providers[model?.startsWith('deepseek') ? 'deepseek' : 'deepseek'] ||
-        ctx.config.llm.providers.deepseek;
+      const providerName = (model && Object.keys(ctx.config.llm.providers).find(k => model.startsWith(k))) || 'deepseek';
+      const provider = ctx.config.llm.providers[providerName] || ctx.config.llm.providers.deepseek;
       const client = new LLMClient({
         apiKey: provider?.apiKey || '',
         baseUrl: provider?.baseUrl || 'https://api.deepseek.com/v1',

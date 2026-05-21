@@ -4,7 +4,7 @@
 import { execSync } from 'node:child_process';
 import { writeFileSync, unlinkSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface MermaidOptions {
   format?: 'svg' | 'png';

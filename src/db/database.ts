@@ -1,6 +1,6 @@
 // ScholariumDB — File-based JSON storage with write batching
 import * as fs from 'node:fs';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import * as path from 'node:path';
 import { randomUUID } from 'crypto';
 
@@ -94,12 +94,14 @@ export class ScholariumDB {
   }
 
   // Paper
-  createPaper(id: string, title: string, targetJournal?: string): void {
+  createPaper(id: string, title: string, targetJournal?: string, researchTopic?: string, contributionGaps?: string[]): void {
     this.data.papers[id] = {
       id,
       title,
       target_journal: targetJournal ?? null,
       status: 'draft',
+      research_topic: researchTopic ?? null,
+      contribution_gaps: contributionGaps ?? [],
       research_brief: null,
       methodology: null,
       current_stage: 0,

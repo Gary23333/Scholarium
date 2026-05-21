@@ -2,7 +2,7 @@
 // Inspired by ARS (Academic Research Skills) socratic_mentor_agent
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import type { SocraticTurn, SocraticLayer, SocraticMode, DialogueHealth, TurnTag } from '../types/index.ts';
 
 export interface SocraticMentorInput {

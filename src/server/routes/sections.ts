@@ -3,7 +3,7 @@ import type { Section } from '../../types/index.ts';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
-import { logger } from '../../utils/logger.js';
+import { logger } from '../../utils/logger.ts';
 
 type SectionsRouteContext = Pick<ServerContext, 'papers' | 'bible' | 'db' | 'router' | 'persistSection' | 'hasLLMFor'>;
 
@@ -17,8 +17,8 @@ export function registerSectionsRoutes(
 ): void {
   register('GET', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/status$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const section = p.sections.find((s) => s.id === sectionId);
@@ -40,8 +40,8 @@ export function registerSectionsRoutes(
 
   register('GET', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/audit-report$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const section = p.sections.find((s) => s.id === sectionId);
@@ -87,7 +87,7 @@ export function registerSectionsRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/outline\/sections$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -108,8 +108,8 @@ export function registerSectionsRoutes(
 
   register('PUT', /^\/api\/papers\/[^/]+\/outline\/sections\/[^/]+$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[6];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[6]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -129,8 +129,8 @@ export function registerSectionsRoutes(
 
   register('DELETE', /^\/api\/papers\/[^/]+\/outline\/sections\/[^/]+$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[6];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[6]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     ctx.db.removeOutlineSection(paperId, sectionId);
@@ -142,7 +142,7 @@ export function registerSectionsRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/outline\/reorder$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -158,8 +158,8 @@ export function registerSectionsRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/rewrite$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -236,8 +236,8 @@ Please output the modified LaTeX content for this section.`;
 
   register('PUT', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/content$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -253,8 +253,8 @@ Please output the modified LaTeX content for this section.`;
 
   register('POST', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/optimize-related$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -363,8 +363,8 @@ Please optimize this section to ensure consistency with the modified section. Fo
 
   register('GET', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/citations$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const sectionId = parts[5];
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
     const bibleCites = ctx.bible.getEntries(paperId, { category: 'citations', sectionId });
     const dbCites = ctx.db.getPaperCitations(paperId);
     const dbMap = new Map<string, any>();
@@ -408,7 +408,7 @@ Please optimize this section to ensure consistency with the modified section. Fo
 
   register('POST', /^\/api\/papers\/[^/]+\/generate-references$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);

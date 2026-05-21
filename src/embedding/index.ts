@@ -1,7 +1,7 @@
 // Embedding Provider — Text embedding support for citation matching and Bible retrieval
 // Supports: local (mock), OpenAI API, DeepSeek API
 
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface EmbeddingResult {
   embedding: number[];

@@ -1,7 +1,7 @@
 // Methodology Agent — Generate methodology blueprint from RQ Brief
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import type { MethodologyBlueprint, ResearchBrief } from '../types/index.ts';
 
 export interface MethodologyAgentInput {

@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { SocraticMode } from '../../types/research.ts';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
+import { handleRouteError } from '../middleware/error-handler.ts';
 
 type SocraticContext = Pick<ServerContext, 'socraticOrchestrator' | 'papers' | 'db'>;
 
@@ -37,21 +38,21 @@ export function registerSocraticRoutes(
 
   register('POST', /^\/api\/socratic\/[^/]+\/respond$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const sessionId = url.pathname.split('/')[3];
+    const sessionId = decodeURIComponent(url.pathname.split('/')[3]);
     const { message, skipCommitment } = await parseBody(req);
     if (!message) return error(res, 'message is required', 400);
 
     try {
       const result = await ctx.socraticOrchestrator.respond(sessionId, message, skipCommitment);
       json(res, result);
-    } catch (e: any) {
-      error(res, e.message, 400);
+    } catch (e: unknown) {
+      handleRouteError(e, res);
     }
   });
 
   register('GET', /^\/api\/socratic\/[^/]+\/summary$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', 'http://localhost');
-    const sessionId = url.pathname.split('/')[3];
+    const sessionId = decodeURIComponent(url.pathname.split('/')[3]);
     const session = ctx.socraticOrchestrator.getSession(sessionId);
     if (!session) return error(res, 'Session not found', 404);
 
@@ -67,7 +68,7 @@ export function registerSocraticRoutes(
 
   register('POST', /^\/api\/socratic\/[^/]+\/complete$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const sessionId = url.pathname.split('/')[3];
+    const sessionId = decodeURIComponent(url.pathname.split('/')[3]);
     try {
       const session = ctx.socraticOrchestrator.getSession(sessionId);
       if (!session) return error(res, 'Session not found', 404);
@@ -75,22 +76,22 @@ export function registerSocraticRoutes(
       const topic = ctx.db.getPaper(session.paperId)?.title ?? '未指定';
       const result = await ctx.socraticOrchestrator.respond(sessionId, '我已经准备好总结我的研究想法了。', true);
       json(res, result);
-    } catch (e: any) {
-      error(res, e.message, 400);
+    } catch (e: unknown) {
+      handleRouteError(e, res);
     }
   });
 
   register('POST', /^\/api\/socratic\/[^/]+\/commitment$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const sessionId = url.pathname.split('/')[3];
+    const sessionId = decodeURIComponent(url.pathname.split('/')[3]);
     const { commitment } = await parseBody(req);
     if (!commitment) return error(res, 'commitment is required', 400);
 
     try {
       const result = await ctx.socraticOrchestrator.completeCommitment(sessionId, commitment);
       json(res, result);
-    } catch (e: any) {
-      error(res, e.message, 400);
+    } catch (e: unknown) {
+      handleRouteError(e, res);
     }
   });
 }

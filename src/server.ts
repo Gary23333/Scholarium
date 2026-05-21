@@ -27,7 +27,7 @@ import { ReviewOrchestrator } from './review/orchestrator.ts';
 import { IntegrityGate } from './integrity/gate.ts';
 import { PassportManager } from './pipeline/passport.ts';
 import { CheckpointManager } from './pipeline/checkpoint.ts';
-import { logger } from './utils/logger.js';
+import { logger } from './utils/logger.ts';
 import type { ServerContext, MindMapSession, PaperProject } from './server/context.ts';
 import type { Section } from './types/index.ts';
 import type { MindMapNode } from './agents/cartographer.ts';
@@ -217,6 +217,8 @@ export class ScholariumAPI {
         id: paperId,
         title: dbPaper.title,
         targetJournal: dbPaper.target_journal,
+        researchTopic: dbPaper.research_topic ?? undefined,
+        contributionGaps: dbPaper.contribution_gaps ?? undefined,
         outline: outline ?? undefined,
         sections,
         status: dbPaper.status || 'draft',

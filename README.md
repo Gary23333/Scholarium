@@ -212,12 +212,12 @@ npm run format:check   # Prettier 检查
 
 | 变更 | 说明 |
 |------|------|
-| 🏗️ **模块化服务器架构** | server.ts 从 2276 行精简至 325 行，拆分为独立模块 |
-| 🛣️ **14 个路由模块** | 清晰的职责分离，每个路由独立维护 |
+| 🏗️ **模块化服务器架构** | server.ts 从 2276 行精简至 327 行，拆分为独立模块 |
+| 🛣️ **15 个路由模块** | 清晰的职责分离，每个路由独立维护 |
 | 🚨 **统一错误处理** | AppError 层级体系，一致的错误响应格式 |
 | 💚 **健康检查端点** | `/api/health` + `/api/health/ready` 就绪探针 |
 | 🔍 **ESLint + Prettier** | ESLint 9+ (typescript-eslint) + Prettier 代码风格统一 |
-| 🧪 **Vitest 测试套件** | 72 个测试用例，覆盖核心逻辑 |
+| 🧪 **Vitest 测试套件** | 88 个测试用例，覆盖核心逻辑 |
 | ⚙️ **GitHub Actions CI/CD** | 自动化构建、检查与测试流水线 |
 | 📐 **TypeScript 严格模式** | 启用 strict 模式 + Node.js 类型定义 |
 

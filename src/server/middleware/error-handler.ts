@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { error } from '../utils/helpers.ts';
 import { AppError } from './errors.ts';
-import { logger } from '../../utils/logger.js';
+import { logger } from '../../utils/logger.ts';
 
 export function handleRouteError(
   err: unknown,

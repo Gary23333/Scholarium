@@ -11,9 +11,9 @@ import type { ServerContext, PaperProject } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { latexToMarkdown, stripLatex } from '../utils/latex-to-md.ts';
 import { taskManager } from '../../task-manager.ts';
-import { logger } from '../../utils/logger.js';
+import { logger } from '../../utils/logger.ts';
 
-type PapersRouteContext = Pick<ServerContext, 'papers' | 'planner' | 'architect' | 'composer' | 'writer' | 'observer' | 'normalizer' | 'bible' | 'db' | 'router' | 'config' | 'dataDir' | 'port' | 'persistSection' | 'hasLLMFor'>;
+type PapersRouteContext = Pick<ServerContext, 'papers' | 'planner' | 'architect' | 'composer' | 'writer' | 'observer' | 'normalizer' | 'bible' | 'db' | 'router' | 'config' | 'dataDir' | 'port' | 'persistSection' | 'hasLLMFor' | 'mmSessions' | 'sseClients'>;
 
 export function registerPapersRoutes(
   ctx: PapersRouteContext,
@@ -49,7 +49,7 @@ export function registerPapersRoutes(
       createdAt: new Date().toISOString(),
     };
     ctx.papers.set(id, p);
-    ctx.db.createPaper(id, p.title, p.targetJournal);
+    ctx.db.createPaper(id, p.title, p.targetJournal, p.researchTopic, p.contributionGaps);
     if (Array.isArray(b.citations))
       for (const c of b.citations)
         ctx.bible.addEntry({
@@ -66,7 +66,7 @@ export function registerPapersRoutes(
 
   register('GET', /^\/api\/papers\/[^/]+$/, async (req, res) => {
     const p = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const id = p[p.length - 1];
+    const id = decodeURIComponent(p[p.length - 1]);
     const paper = ctx.papers.get(id);
     if (!paper) return error(res, 'Paper not found', 404);
     const bibleStats = ctx.bible.getStats(id);
@@ -75,16 +75,30 @@ export function registerPapersRoutes(
 
   register('DELETE', /^\/api\/papers\/[^/]+$/, async (req, res) => {
     const p = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const id = p[p.length - 1];
+    const id = decodeURIComponent(p[p.length - 1]);
     if (!ctx.papers.has(id)) return error(res, 'Paper not found', 404);
     ctx.papers.delete(id);
     ctx.db.deletePaper(id);
+    for (const [mmId, mm] of ctx.mmSessions) {
+      if (mm.researchTopic === id || (mm as any).paperId === id) {
+        const clients = ctx.sseClients.get(mmId);
+        if (clients) {
+          for (const c of clients) {
+            try { c.end(); } catch { /* ignore */ }
+          }
+          ctx.sseClients.delete(mmId);
+        }
+        ctx.mmSessions.delete(mmId);
+        ctx.db.deleteMindMapSession(mmId);
+      }
+    }
+    taskManager.removeByPaperId(id);
     json(res, { ok: true });
   });
 
   register('POST', /^\/api\/papers\/[^/]+\/plan$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const b = await parseBody(req);
@@ -123,7 +137,7 @@ export function registerPapersRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/write$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p || !p.outline) return error(res, 'Paper or outline not found', 404);
     const b = await parseBody(req);
@@ -192,7 +206,7 @@ export function registerPapersRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/compile$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const outDir = path.join(ctx.dataDir, 'output', paperId);
@@ -230,7 +244,7 @@ export function registerPapersRoutes(
 
   register('GET', /^\/api\/papers\/[^/]+\/fulltext$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const url = new URL((req as any).url ?? '/', `http://localhost:${ctx.port}`);
@@ -268,7 +282,7 @@ export function registerPapersRoutes(
 
   register('GET', /^\/api\/papers\/[^/]+\/export$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
     const url = new URL((req as any).url ?? '/', `http://localhost:${ctx.port}`);
@@ -309,7 +323,7 @@ export function registerPapersRoutes(
 
   register('GET', /^\/api\/papers\/[^/]+\/status$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
 
@@ -348,7 +362,7 @@ export function registerPapersRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/directive$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
 
@@ -406,7 +420,7 @@ export function registerPapersRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/rewrite$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
 
@@ -434,7 +448,7 @@ export function registerPapersRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/audit$/, async (req, res) => {
     const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const p = ctx.papers.get(paperId);
     if (!p) return error(res, 'Paper not found', 404);
 

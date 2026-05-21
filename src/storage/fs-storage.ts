@@ -1,6 +1,6 @@
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import type { PaperOutline, Section, SectionBlueprint, PipelineRun } from '../types/index.ts';
 
 export interface PipelineStorage {

@@ -1,7 +1,7 @@
 // Rate Limiter — Token bucket + exponential backoff + local cache
 // Applied to Semantic Scholar, arXiv, CrossRef API calls
 
-import { logger } from './logger.js';
+import { logger } from './logger.ts';
 
 export interface RateLimitConfig {
   maxTokens: number;

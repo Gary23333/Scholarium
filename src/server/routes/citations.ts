@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { taskManager } from '../../task-manager.ts';
-import { logger } from '../../utils/logger.js';
+import { logger } from '../../utils/logger.ts';
 
 type CitationContext = Pick<ServerContext, 'bible' | 'db' | 'config' | 'dataDir'>;
 
@@ -96,7 +96,19 @@ export function registerCitationRoutes(
 
     try {
       taskManager.updateProgress(task.id, 20, '正在获取网页内容...');
-      const fetchRes = await fetch(pageUrl, { signal: AbortSignal.timeout(15000) });
+      let fetchRes = await fetch(pageUrl, { signal: AbortSignal.timeout(15000), redirect: 'manual' });
+      if (fetchRes.status >= 300 && fetchRes.status < 400) {
+        const redirectUrl = fetchRes.headers.get('location');
+        if (!redirectUrl) return error(res, 'Redirect with no Location header', 400);
+        if (!isSafeUrl(redirectUrl)) return error(res, 'Redirect URL is not allowed', 400);
+        fetchRes = await fetch(redirectUrl, { signal: AbortSignal.timeout(15000), redirect: 'manual' });
+        if (fetchRes.status >= 300 && fetchRes.status < 400) {
+          return error(res, 'Too many redirects', 400);
+        }
+        if (fetchRes.url && !isSafeUrl(fetchRes.url)) {
+          return error(res, 'Final URL is not allowed', 400);
+        }
+      }
       const html = await fetchRes.text();
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
       const title = titleMatch ? titleMatch[1].trim() : pageUrl;
@@ -115,9 +127,10 @@ export function registerCitationRoutes(
       const userPrompt = isTemplate
         ? `URL: ${pageUrl}\nTitle: ${title}\nContent preview: ${cleanText}\n\nGenerate a citation following this EXACT template format. Replace each {{placeholder}} with the appropriate value from the page:\n\n${format}\n\nOutput ONLY the filled citation text, no other text.`
         : `URL: ${pageUrl}\nTitle: ${title}\nContent preview: ${cleanText}\n\nGenerate a citation in ${format || 'bibtex'} format. Include: author(s), title, publication date/access date, URL. Output ONLY the citation text.`;
+      const providerName = (model && Object.keys(ctx.config.llm.providers).find(k => model.startsWith(k))) || 'deepseek';
       const client = new LLMClient({
-        apiKey: ctx.config.llm.providers[model ? 'deepseek' : 'deepseek']?.apiKey || '',
-        baseUrl: ctx.config.llm.providers[model ? 'deepseek' : 'deepseek']?.baseUrl || 'https://api.deepseek.com/v1',
+        apiKey: ctx.config.llm.providers[providerName]?.apiKey || '',
+        baseUrl: ctx.config.llm.providers[providerName]?.baseUrl || 'https://api.deepseek.com/v1',
         model: model || 'deepseek-v4-flash',
         maxTokens: 1000,
         timeout: 60000,
@@ -152,7 +165,7 @@ export function registerCitationRoutes(
 
       const agentConfig = ctx.config.llm.models.citationGenerator;
       const selectedModel = model || agentConfig?.model || 'deepseek-v4-flash';
-      const providerName = selectedModel.startsWith('deepseek') ? 'deepseek' : 'deepseek';
+      const providerName = Object.keys(ctx.config.llm.providers).find(k => selectedModel.startsWith(k)) || 'deepseek';
       const provider = ctx.config.llm.providers[providerName];
 
       taskManager.updateProgress(task.id, 60, '正在生成模板...');
@@ -226,7 +239,7 @@ export function registerCitationRoutes(
 
   register('DELETE', /^\/api\/citations\/templates\/[^/]+$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const templateId = url.pathname.split('/').pop()!;
+    const templateId = decodeURIComponent(url.pathname.split('/').pop()!);
     const filePath = path.join(ctx.dataDir, 'citation-templates.json');
     let templates: any[] = [];
     if (fs.existsSync(filePath)) {
@@ -243,7 +256,7 @@ export function registerCitationRoutes(
 
   register('GET', /^\/api\/papers\/[^/]+\/citations$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     const dbCitations = ctx.db.getPaperCitations(paperId);
     const bibleCitations = ctx.bible.getEntries(paperId, { category: 'citations' });
     const seen = new Set<string>();
@@ -278,7 +291,7 @@ export function registerCitationRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/citations$/, async (req, res) => {
     const reqUrl = new URL((req as any).url ?? '/', 'http://localhost');
-    const paperId = reqUrl.pathname.split('/')[3];
+    const paperId = decodeURIComponent(reqUrl.pathname.split('/')[3]);
     const b = await parseBody(req);
     const { citeKey, bibtex, title, url, authors, year } = b;
     if (!citeKey) return error(res, 'citeKey is required', 400);
@@ -307,8 +320,8 @@ export function registerCitationRoutes(
 
   register('PUT', /^\/api\/papers\/[^/]+\/citations\/[^/]+$/, async (req, res) => {
     const parts = new URL((req as any).url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const citeKey = parts[6];
+    const paperId = decodeURIComponent(parts[3]);
+    const citeKey = decodeURIComponent(parts[5]);
     const b = await parseBody(req);
     const existing = ctx.db.getCitation(paperId, citeKey);
     if (!existing) return error(res, 'Citation not found', 404);
@@ -324,8 +337,8 @@ export function registerCitationRoutes(
 
   register('DELETE', /^\/api\/papers\/[^/]+\/citations\/[^/]+$/, async (_req, res) => {
     const parts = new URL((_req as any).url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
-    const citeKey = parts[6];
+    const paperId = decodeURIComponent(parts[3]);
+    const citeKey = decodeURIComponent(parts[5]);
     const existing = ctx.db.getCitation(paperId, citeKey);
     if (!existing) return error(res, 'Citation not found', 404);
     ctx.db.deletePaperCitation(existing.id);
@@ -334,7 +347,7 @@ export function registerCitationRoutes(
 
   register('POST', /^\/api\/papers\/[^/]+\/citations\/lookup$/, async (req, res) => {
     const parts = new URL((req as any).url ?? '/', 'http://localhost').pathname.split('/');
-    const paperId = parts[3];
+    const paperId = decodeURIComponent(parts[3]);
     const b = await parseBody(req);
     let citeKeys: string[] = b.citeKeys;
 
@@ -399,8 +412,9 @@ export function registerCitationRoutes(
 
           const bibleEntry = ctx.db.getBibleEntryByKey(paperId, 'citations', key);
           if (bibleEntry) {
-            bibleEntry.value = `${authors} (${year ?? 'n.d.'}). ${title}. ${url || ''}`;
-            ctx.db.flush();
+            ctx.db.updateBibleEntry(bibleEntry.id, {
+              value: `${authors} (${year ?? 'n.d.'}). ${title}. ${url || ''}`,
+            });
           }
 
           results.push({ citeKey: key, title, authors, year, url, found: true });

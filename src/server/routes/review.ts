@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
+import { handleRouteError } from '../middleware/error-handler.ts';
 
 type ReviewContext = Pick<ServerContext, 'reviewOrchestrator' | 'papers' | 'db'>;
 
@@ -14,7 +15,7 @@ export function registerReviewRoutes(
 ): void {
   register('POST', /^\/api\/review\/[^/]+\/start$/, async (req, res) => {
     const url = new URL((req as any).url ?? '/', 'http://localhost');
-    const paperId = url.pathname.split('/')[3];
+    const paperId = decodeURIComponent(url.pathname.split('/')[3]);
     const paper = ctx.papers.get(paperId) ?? ctx.db.getPaper(paperId);
     if (!paper) return error(res, 'Paper not found', 404);
 
@@ -32,14 +33,14 @@ export function registerReviewRoutes(
         session: result.session,
         editorialDecision: result.editorialDecision,
       });
-    } catch (e: any) {
-      error(res, e.message, 500);
+    } catch (e: unknown) {
+      handleRouteError(e, res);
     }
   });
 
   register('GET', /^\/api\/review\/[^/]+$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', 'http://localhost');
-    const sessionId = url.pathname.split('/')[3];
+    const sessionId = decodeURIComponent(url.pathname.split('/')[3]);
     const session = ctx.reviewOrchestrator.getSession(sessionId);
     if (!session) return error(res, 'Review session not found', 404);
     json(res, session);

@@ -1,7 +1,7 @@
 import { BaseAgent } from './base.ts';
 import type { AgentOptions, NormalizerInput, NormalizeResult, LengthGovernanceConfig } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 const DEFAULT_LENGTH_CONFIG: LengthGovernanceConfig = {
   mode: 'word',

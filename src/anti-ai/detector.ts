@@ -3,7 +3,7 @@ import type { AIScoreReport, DetectionConfig, HighRiskSpan } from '../types/inde
 import { DEFAULT_DETECTION_CONFIG } from '../types/index.ts';
 import { ZH_PATTERNS, EN_PATTERNS } from './patterns.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 let spanId = 0;
 

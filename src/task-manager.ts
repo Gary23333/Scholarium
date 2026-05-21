@@ -241,6 +241,15 @@ export class TaskManager {
   clear(): void {
     this.tasks.clear();
   }
+
+  /** 删除与指定 paperId 关联的任务 */
+  removeByPaperId(paperId: string): void {
+    for (const [id, task] of this.tasks) {
+      if (task.metadata?.paperId === paperId) {
+        this.tasks.delete(id);
+      }
+    }
+  }
 }
 
 // 全局任务管理器实例

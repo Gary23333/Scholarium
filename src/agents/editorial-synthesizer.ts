@@ -8,7 +8,7 @@ import type {
   ConsensusLevel,
   DevilsAdvocateReport,
 } from '../types/index.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface SynthesizerInput {

@@ -29,7 +29,7 @@ export function registerTasksRoutes(
 
   register('GET', /^\/api\/tasks\/[^/]+$/, async (_req, res) => {
     const url = new URL((_req as any).url ?? '/', `http://localhost:${ctx.port}`);
-    const taskId = url.pathname.split('/').pop()!;
+    const taskId = decodeURIComponent(url.pathname.split('/').pop()!);
     const task = taskManager.get(taskId);
     if (!task) return error(res, 'Task not found', 404);
     json(res, task);

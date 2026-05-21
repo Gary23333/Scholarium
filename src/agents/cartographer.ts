@@ -3,7 +3,7 @@
 import { BaseAgent } from './base.ts';
 import type { AgentOptions } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 // ── Types ──
 

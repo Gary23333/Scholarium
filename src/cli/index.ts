@@ -6,7 +6,7 @@ import * as fs from 'node:fs';
 import { createLatexProject, loadProject, writeSectionFile, assembleFullPaper } from '../latex/assembler.ts';
 import { compile, detectEngine } from '../latex/compiler.ts';
 import type { CliCommandResult, FullPaper } from '../types/index.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 const program = new Command();
 program.name('scholarium').description('Scholarium — Multi-Agent Academic Paper Writing System').version('0.1.0');

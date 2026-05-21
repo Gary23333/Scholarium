@@ -2,7 +2,7 @@ import { LLMClient, type LLMClientConfig, type LLMMessage, type LLMResponse } fr
 import type { ScholariumConfig } from '../types/index.ts';
 import { getAgentRoute } from '../config/loader.ts';
 import { getModelCapabilities, getRecommendedMaxTokens } from './model-capabilities.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 
 export interface RouteResult {
   model: string;

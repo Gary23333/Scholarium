@@ -10,7 +10,7 @@ import type {
   VoteConsensus,
   Severity,
 } from '../types/index.ts';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { runRealSubAuditor } from './real-audit.ts';
 
