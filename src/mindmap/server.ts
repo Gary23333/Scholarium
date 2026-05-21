@@ -39,7 +39,7 @@ export class MindMapServer {
   start(): Promise<void> {
     return new Promise((resolve) => {
       this.server = http.createServer((req, res) => {
-        this.handleRequest(req, res).catch(err => {
+        this.handleRequest(req, res).catch((err) => {
           logger.error('[MindMap] Unhandled error:', err);
           if (!res.headersSent) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -54,7 +54,9 @@ export class MindMapServer {
     });
   }
 
-  stop(): void { this.server?.close(); }
+  stop(): void {
+    this.server?.close();
+  }
 
   private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', `http://localhost:${this.options.port}`);
@@ -64,7 +66,11 @@ export class MindMapServer {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    if (method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+    if (method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
 
     // Route
     try {
@@ -142,21 +148,32 @@ export class MindMapServer {
 
     for (const node of output.nodes) {
       this.sendSSE(sessionId, { type: 'node', node });
-      await new Promise(r => setTimeout(r, 60));
+      await new Promise((r) => setTimeout(r, 60));
     }
     this.sendSSE(sessionId, { type: 'diverge_complete', round: output.round, summary: output.summary });
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ nodes: output.nodes, round: output.round, summary: output.summary, totalNodes: session.nodes.length }));
+    res.end(
+      JSON.stringify({
+        nodes: output.nodes,
+        round: output.round,
+        summary: output.summary,
+        totalNodes: session.nodes.length,
+      }),
+    );
   }
 
   private async handleCheck(req: any, res: http.ServerResponse): Promise<void> {
     const body = await this.readBody(req);
     const { sessionId, nodeId, checked } = JSON.parse(body);
     const session = this.sessions.get(sessionId);
-    if (!session) { res.writeHead(404); res.end(JSON.stringify({ error: 'Session not found' })); return; }
+    if (!session) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
 
-    const node = session.nodes.find(n => n.id === nodeId);
+    const node = session.nodes.find((n) => n.id === nodeId);
     if (node) node.checked = !!checked;
 
     this.sendSSE(sessionId, { type: 'check', nodeId, checked: !!checked });
@@ -168,16 +185,24 @@ export class MindMapServer {
     const body = await this.readBody(req);
     const { sessionId } = JSON.parse(body);
     const session = this.sessions.get(sessionId);
-    if (!session) { res.writeHead(404); res.end(JSON.stringify({ error: 'Session not found' })); return; }
+    if (!session) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
 
-    const selectedNodes = session.nodes.filter(n => n.checked);
-    const gaps = session.nodes.filter(n => n.round === 3 && n.label.startsWith('[Gap]')).map(n => n.label.replace(/^\[Gap\]\s*/, ''));
-    const noveltyCandidates = session.nodes.filter(n => n.round === 3 && n.label.startsWith('[Novelty]')).map(n => n.label.replace(/^\[Novelty\]\s*/, ''));
+    const selectedNodes = session.nodes.filter((n) => n.checked);
+    const gaps = session.nodes
+      .filter((n) => n.round === 3 && n.label.startsWith('[Gap]'))
+      .map((n) => n.label.replace(/^\[Gap\]\s*/, ''));
+    const noveltyCandidates = session.nodes
+      .filter((n) => n.round === 3 && n.label.startsWith('[Novelty]'))
+      .map((n) => n.label.replace(/^\[Novelty\]\s*/, ''));
 
     const confirmedFocus = {
       researchTopic: session.researchTopic,
-      selectedBranches: selectedNodes.filter(n => n.round === 1).map(n => n.label),
-      confirmedNodes: selectedNodes.map(n => ({ id: n.id, label: n.label, depth: n.round })),
+      selectedBranches: selectedNodes.filter((n) => n.round === 1).map((n) => n.label),
+      confirmedNodes: selectedNodes.map((n) => ({ id: n.id, label: n.label, depth: n.round })),
       contributionGaps: gaps,
       noveltyCandidates,
     };
@@ -188,7 +213,7 @@ export class MindMapServer {
   }
 
   private handleSSE(req: any, res: http.ServerResponse, sessionId: string): void {
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
     res.write('data: {"type":"connected"}\n\n');
 
     const clients = this.sseClients.get(sessionId) ?? [];
@@ -197,14 +222,20 @@ export class MindMapServer {
 
     req.on('close', () => {
       const arr = this.sseClients.get(sessionId) ?? [];
-      this.sseClients.set(sessionId, arr.filter(c => c !== res));
+      this.sseClients.set(
+        sessionId,
+        arr.filter((c) => c !== res),
+      );
     });
   }
 
   private handleListSessions(res: http.ServerResponse): void {
-    const sessions = Array.from(this.sessions.values()).map(s => ({
-      id: s.id, researchTopic: s.researchTopic, currentRound: s.currentRound,
-      nodeCount: s.nodes.length, status: s.status,
+    const sessions = Array.from(this.sessions.values()).map((s) => ({
+      id: s.id,
+      researchTopic: s.researchTopic,
+      currentRound: s.currentRound,
+      nodeCount: s.nodes.length,
+      status: s.status,
     }));
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(sessions));
@@ -217,11 +248,25 @@ export class MindMapServer {
     const filePath = path.resolve(staticDir, safePath);
 
     // Prevent path traversal
-    if (!filePath.startsWith(staticDir + path.sep) && filePath !== staticDir) { res.writeHead(403); res.end('Forbidden'); return; }
-    if (!fs.existsSync(filePath)) { res.writeHead(404); res.end('Not found'); return; }
+    if (!filePath.startsWith(staticDir + path.sep) && filePath !== staticDir) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end('Not found');
+      return;
+    }
 
     const ext = path.extname(filePath);
-    const mimeTypes: Record<string, string> = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
+    const mimeTypes: Record<string, string> = {
+      '.html': 'text/html',
+      '.js': 'application/javascript',
+      '.css': 'text/css',
+      '.json': 'application/json',
+      '.svg': 'image/svg+xml',
+    };
     res.writeHead(200, { 'Content-Type': mimeTypes[ext] ?? 'application/octet-stream' });
     fs.createReadStream(filePath).pipe(res);
   }
@@ -229,7 +274,13 @@ export class MindMapServer {
   private sendSSE(sessionId: string, data: any): void {
     const clients = this.sseClients.get(sessionId) ?? [];
     const msg = `data: ${JSON.stringify(data)}\n\n`;
-    for (const client of clients) { try { client.write(msg); } catch { /* client disconnected */ } }
+    for (const client of clients) {
+      try {
+        client.write(msg);
+      } catch {
+        /* client disconnected */
+      }
+    }
   }
 
   private readBody(req: any): Promise<string> {
@@ -239,7 +290,10 @@ export class MindMapServer {
       const MAX = 1024 * 1024; // 1MB limit
       req.on('data', (chunk: Buffer) => {
         size += chunk.length;
-        if (size > MAX) { reject(new Error('Request body too large')); return; }
+        if (size > MAX) {
+          reject(new Error('Request body too large'));
+          return;
+        }
         chunks.push(chunk);
       });
       req.on('end', () => resolve(Buffer.concat(chunks).toString()));

@@ -54,7 +54,7 @@ export class LLMClient {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       if (attempt > 0) {
         // Exponential backoff: 1s, 2s, 4s
-        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
       }
 
       const controller = new AbortController();
@@ -63,13 +63,13 @@ export class LLMClient {
       try {
         const resp = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.config.apiKey}` },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.config.apiKey}` },
           body: JSON.stringify(body),
           signal: controller.signal,
         });
 
         if (resp.ok) {
-          const data = await resp.json() as any;
+          const data = (await resp.json()) as any;
           clearTimeout(timer);
           return {
             content: data.choices?.[0]?.message?.content ?? '',
@@ -102,7 +102,11 @@ export class LLMClient {
           continue;
         }
         // Network errors are retryable
-        if (err.message?.includes('fetch failed') || err.message?.includes('ECONNRESET') || err.message?.includes('ETIMEDOUT')) {
+        if (
+          err.message?.includes('fetch failed') ||
+          err.message?.includes('ECONNRESET') ||
+          err.message?.includes('ETIMEDOUT')
+        ) {
           lastError = err;
           continue;
         }
@@ -122,6 +126,10 @@ export class LLMClient {
     return resp.content;
   }
 
-  getModel(): string { return this.config.model; }
-  getBaseUrl(): string { return this.config.baseUrl; }
+  getModel(): string {
+    return this.config.model;
+  }
+  getBaseUrl(): string {
+    return this.config.baseUrl;
+  }
 }

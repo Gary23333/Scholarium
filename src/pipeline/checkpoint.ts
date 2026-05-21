@@ -28,19 +28,31 @@ export class CheckpointManager {
     const metricsRecord: Record<string, { value: number | string; status: 'ok' | 'warning' | 'critical' }> = {};
 
     if (metrics.wordCount) {
-      metricsRecord['字数'] = { value: `${metrics.wordCount.value}/${metrics.wordCount.target}`, status: metrics.wordCount.status };
+      metricsRecord['字数'] = {
+        value: `${metrics.wordCount.value}/${metrics.wordCount.target}`,
+        status: metrics.wordCount.status,
+      };
     }
     if (metrics.references) {
-      metricsRecord['引用'] = { value: `${metrics.references.value} (min: ${metrics.references.min})`, status: metrics.references.status };
+      metricsRecord['引用'] = {
+        value: `${metrics.references.value} (min: ${metrics.references.min})`,
+        status: metrics.references.status,
+      };
     }
     if (metrics.sections) {
-      metricsRecord['章节'] = { value: `${metrics.sections.drafted}/${metrics.sections.total}`, status: metrics.sections.status };
+      metricsRecord['章节'] = {
+        value: `${metrics.sections.drafted}/${metrics.sections.total}`,
+        status: metrics.sections.status,
+      };
     }
     if (metrics.quality) {
       metricsRecord['质量'] = { value: metrics.quality.score, status: metrics.quality.status };
     }
     if (metrics.integrity) {
-      metricsRecord['完整性'] = { value: metrics.integrity.passed ? '通过' : '未通过', status: metrics.integrity.status };
+      metricsRecord['完整性'] = {
+        value: metrics.integrity.passed ? '通过' : '未通过',
+        status: metrics.integrity.status,
+      };
     }
 
     const checkpoint: Checkpoint = {

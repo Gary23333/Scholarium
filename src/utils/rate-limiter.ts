@@ -5,11 +5,11 @@ import { logger } from './logger.js';
 
 export interface RateLimitConfig {
   maxTokens: number;
-  refillRate: number;       // tokens per second
+  refillRate: number; // tokens per second
   refillIntervalMs?: number; // defaults to 1000
-  maxRetries?: number;       // max retries on 429
-  backoffBaseMs?: number;    // exponential backoff base
-  cacheTtlMs?: number;       // local cache TTL
+  maxRetries?: number; // max retries on 429
+  backoffBaseMs?: number; // exponential backoff base
+  cacheTtlMs?: number; // local cache TTL
 }
 
 interface TokenBucket {
@@ -25,34 +25,34 @@ interface CacheEntry {
 
 const DEFAULT_CONFIG: RateLimitConfig = {
   maxTokens: 5,
-  refillRate: 1,             // 1 QPS default
+  refillRate: 1, // 1 QPS default
   refillIntervalMs: 1000,
   maxRetries: 3,
   backoffBaseMs: 1000,
-  cacheTtlMs: 60000,         // 1 minute default
+  cacheTtlMs: 60000, // 1 minute default
 };
 
 const DOMAIN_CONFIGS: Record<string, RateLimitConfig> = {
   'api.semanticscholar.org': {
     maxTokens: 5,
-    refillRate: 5,            // 5 QPS (Semantic Scholar free tier)
+    refillRate: 5, // 5 QPS (Semantic Scholar free tier)
     maxRetries: 3,
     backoffBaseMs: 2000,
-    cacheTtlMs: 300000,       // 5 min cache
+    cacheTtlMs: 300000, // 5 min cache
   },
   'export.arxiv.org': {
     maxTokens: 1,
-    refillRate: 1,            // 1 QPS (arXiv rate limit)
+    refillRate: 1, // 1 QPS (arXiv rate limit)
     maxRetries: 5,
     backoffBaseMs: 5000,
-    cacheTtlMs: 600000,       // 10 min cache
+    cacheTtlMs: 600000, // 10 min cache
   },
   'api.crossref.org': {
     maxTokens: 10,
-    refillRate: 10,           // 10 QPS (CrossRef polite pool)
+    refillRate: 10, // 10 QPS (CrossRef polite pool)
     maxRetries: 3,
     backoffBaseMs: 1000,
-    cacheTtlMs: 300000,       // 5 min cache
+    cacheTtlMs: 300000, // 5 min cache
   },
 };
 
@@ -81,10 +81,7 @@ export class RateLimiter {
     const refillInterval = bucket.config.refillIntervalMs ?? 1000;
     const refillCycles = Math.floor(elapsed / refillInterval);
     if (refillCycles > 0) {
-      bucket.tokens = Math.min(
-        bucket.config.maxTokens,
-        bucket.tokens + refillCycles * bucket.config.refillRate
-      );
+      bucket.tokens = Math.min(bucket.config.maxTokens, bucket.tokens + refillCycles * bucket.config.refillRate);
       bucket.lastRefill = now;
     }
   }
@@ -99,21 +96,16 @@ export class RateLimiter {
     }
 
     // Wait for next refill cycle
-    const waitMs = (bucket.config.refillIntervalMs ?? 1000) -
-      (Date.now() - bucket.lastRefill);
+    const waitMs = (bucket.config.refillIntervalMs ?? 1000) - (Date.now() - bucket.lastRefill);
     if (waitMs > 0) {
       logger.debug(`RateLimiter:${domain}`, `throttled, waiting ${waitMs}ms`);
-      await new Promise(r => setTimeout(r, waitMs));
+      await new Promise((r) => setTimeout(r, waitMs));
     }
     bucket.tokens = bucket.config.maxTokens - 1;
     bucket.lastRefill = Date.now();
   }
 
-  async fetchWithRetry(
-    url: string,
-    init: RequestInit = {},
-    domain?: string
-  ): Promise<Response> {
+  async fetchWithRetry(url: string, init: RequestInit = {}, domain?: string): Promise<Response> {
     const host = domain ?? new URL(url).hostname;
     const config = this.getDomainConfig(host);
 
@@ -124,17 +116,18 @@ export class RateLimiter {
         const resp = await fetch(url, init);
         if (resp.status === 429) {
           const retryAfter = parseInt(resp.headers.get('Retry-After') ?? '', 10);
-          const delay = retryAfter > 0
-            ? retryAfter * 1000
-            : (config.backoffBaseMs ?? 1000) * Math.pow(2, attempt);
-          logger.warn(`RateLimiter:${host}`, `429 received, retrying in ${delay}ms (attempt ${attempt + 1}/${config.maxRetries})`);
-          await new Promise(r => setTimeout(r, delay));
+          const delay = retryAfter > 0 ? retryAfter * 1000 : (config.backoffBaseMs ?? 1000) * Math.pow(2, attempt);
+          logger.warn(
+            `RateLimiter:${host}`,
+            `429 received, retrying in ${delay}ms (attempt ${attempt + 1}/${config.maxRetries})`,
+          );
+          await new Promise((r) => setTimeout(r, delay));
           continue;
         }
         if (resp.status >= 500 && attempt < (config.maxRetries ?? 3)) {
           const delay = (config.backoffBaseMs ?? 1000) * Math.pow(2, attempt);
           logger.warn(`RateLimiter:${host}`, `Server error ${resp.status}, retrying in ${delay}ms`);
-          await new Promise(r => setTimeout(r, delay));
+          await new Promise((r) => setTimeout(r, delay));
           continue;
         }
         return resp;
@@ -142,7 +135,7 @@ export class RateLimiter {
         if (attempt < (config.maxRetries ?? 3)) {
           const delay = (config.backoffBaseMs ?? 1000) * Math.pow(2, attempt);
           logger.warn(`RateLimiter:${host}`, `Network error, retrying in ${delay}ms: ${String(err)}`);
-          await new Promise(r => setTimeout(r, delay));
+          await new Promise((r) => setTimeout(r, delay));
         } else {
           throw err;
         }
@@ -170,7 +163,11 @@ export class RateLimiter {
     });
   }
 
-  async cachedFetch(url: string, init: RequestInit = {}, domain?: string): Promise<{ data: unknown; fromCache: boolean }> {
+  async cachedFetch(
+    url: string,
+    init: RequestInit = {},
+    domain?: string,
+  ): Promise<{ data: unknown; fromCache: boolean }> {
     const host = domain ?? new URL(url).hostname;
     const cacheKey = `${url}:${JSON.stringify(init)}`;
 

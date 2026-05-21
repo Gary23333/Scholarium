@@ -33,17 +33,43 @@ export class ReviewOrchestrator {
     this.deps = deps;
   }
 
-  async startReview(paperId: string, paperContent: string, paperTitle: string, round: number = 1): Promise<StartReviewResult> {
+  async startReview(
+    paperId: string,
+    paperContent: string,
+    paperTitle: string,
+    round: number = 1,
+  ): Promise<StartReviewResult> {
     // Phase 0: Field Analysis
     const config = await this.deps.fieldAnalyst.execute({ paperContent, paperTitle });
 
     // Phase 1: Parallel reviews
     const [eicReport, methodologyReport, domainReport, perspectiveReport, daReport] = await Promise.all([
-      this.deps.eic.execute({ paperContent, paperTitle, field: config.field, reviewerConfig: config.reviewers.find((r: any) => r.role === 'eic') }),
-      this.deps.methodology.execute({ paperContent, paperTitle, reviewerConfig: config.reviewers.find((r: any) => r.role === 'methodology') }),
-      this.deps.domain.execute({ paperContent, paperTitle, reviewerConfig: config.reviewers.find((r: any) => r.role === 'domain') }),
-      this.deps.perspective.execute({ paperContent, paperTitle, reviewerConfig: config.reviewers.find((r: any) => r.role === 'perspective') }),
-      this.deps.da.execute({ paperContent, paperTitle, reviewerConfig: config.reviewers.find((r: any) => r.role === 'da') }),
+      this.deps.eic.execute({
+        paperContent,
+        paperTitle,
+        field: config.field,
+        reviewerConfig: config.reviewers.find((r: any) => r.role === 'eic'),
+      }),
+      this.deps.methodology.execute({
+        paperContent,
+        paperTitle,
+        reviewerConfig: config.reviewers.find((r: any) => r.role === 'methodology'),
+      }),
+      this.deps.domain.execute({
+        paperContent,
+        paperTitle,
+        reviewerConfig: config.reviewers.find((r: any) => r.role === 'domain'),
+      }),
+      this.deps.perspective.execute({
+        paperContent,
+        paperTitle,
+        reviewerConfig: config.reviewers.find((r: any) => r.role === 'perspective'),
+      }),
+      this.deps.da.execute({
+        paperContent,
+        paperTitle,
+        reviewerConfig: config.reviewers.find((r: any) => r.role === 'da'),
+      }),
     ]);
 
     const reports: ReviewReport[] = [eicReport, methodologyReport, domainReport, perspectiveReport];
@@ -62,7 +88,7 @@ export class ReviewOrchestrator {
       daReport,
       editorialDecision,
       revisionHistory: [],
-      traceabilityMatrix: editorialDecision.revisionRoadmap.map(item => ({
+      traceabilityMatrix: editorialDecision.revisionRoadmap.map((item) => ({
         issueId: item.id,
         reviewerComment: item.description,
         reviewerRole: item.source as any,
@@ -103,14 +129,16 @@ export class ReviewOrchestrator {
   }
 
   getSessionsByPaper(paperId: string): ReviewSession[] {
-    return this.deps.db.getReviewReportsByPaper(paperId).map(r => this.dbToSession(r));
+    return this.deps.db.getReviewReportsByPaper(paperId).map((r) => this.dbToSession(r));
   }
 
   private dbToSession(db: any): ReviewSession {
-    const reports = typeof db.reports === 'string' ? JSON.parse(db.reports) : db.reports ?? [];
+    const reports = typeof db.reports === 'string' ? JSON.parse(db.reports) : (db.reports ?? []);
     const daReport = typeof db.da_report === 'string' ? JSON.parse(db.da_report) : db.da_report;
-    const decision = typeof db.editorial_decision === 'string' ? JSON.parse(db.editorial_decision) : db.editorial_decision;
-    const matrix = typeof db.traceability_matrix === 'string' ? JSON.parse(db.traceability_matrix) : db.traceability_matrix ?? [];
+    const decision =
+      typeof db.editorial_decision === 'string' ? JSON.parse(db.editorial_decision) : db.editorial_decision;
+    const matrix =
+      typeof db.traceability_matrix === 'string' ? JSON.parse(db.traceability_matrix) : (db.traceability_matrix ?? []);
 
     return {
       id: db.id,

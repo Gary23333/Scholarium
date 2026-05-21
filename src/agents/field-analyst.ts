@@ -12,22 +12,41 @@ export interface FieldAnalystInput {
 export class FieldAnalystAgent extends BaseAgent<FieldAnalystInput, ReviewerConfigCard> {
   readonly name = 'FieldAnalyst';
   private router?: LLMRouter;
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: FieldAnalystInput): Promise<ReviewerConfigCard> {
     if (!this.router) return this.mockExecute(input);
     const systemPrompt = `分析论文内容，识别领域并配置评审员身份。输出 JSON：
 { "field":"主学科","subField":"次学科","paradigm":"范式","methodologyType":"方法类型","targetJournalTier":"期刊层级","reviewers":[{"role":"eic","name":"...","expertise":"...","reviewFocus":"..."},...] }`;
     try {
-      const content = await this.router.complete('fieldAnalyst', systemPrompt, `论文标题：${input.paperTitle}\n\n${input.paperContent.slice(0, 3000)}`, { temperature: 0.2, maxTokens: 1024 });
-      return JSON.parse(content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
-    } catch (e) { logger.warn('FieldAnalyst LLM failed', String(e)); return this.mockExecute(input); }
+      const content = await this.router.complete(
+        'fieldAnalyst',
+        systemPrompt,
+        `论文标题：${input.paperTitle}\n\n${input.paperContent.slice(0, 3000)}`,
+        { temperature: 0.2, maxTokens: 1024 },
+      );
+      return JSON.parse(
+        content
+          .replace(/```json\n?/g, '')
+          .replace(/```\n?/g, '')
+          .trim(),
+      );
+    } catch (e) {
+      logger.warn('FieldAnalyst LLM failed', String(e));
+      return this.mockExecute(input);
+    }
   }
 
   protected async mockExecute(input: FieldAnalystInput): Promise<ReviewerConfigCard> {
     const title = input.paperTitle;
     return {
-      field: '教育学', subField: '高等教育质量保障', paradigm: 'pragmatist', methodologyType: 'mixed',
+      field: '教育学',
+      subField: '高等教育质量保障',
+      paradigm: 'pragmatist',
+      methodologyType: 'mixed',
       targetJournalTier: 'Q2',
       reviewers: [
         { role: 'eic', name: '张教授', expertise: '高等教育管理', reviewFocus: '期刊适配度与原创性' },

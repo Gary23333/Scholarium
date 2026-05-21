@@ -1,10 +1,10 @@
-# 🎓 Scholarium v1.5 — AI 学术论文多智能体写作系统
+# 🎓 Scholarium v2.0 — AI 学术论文多智能体写作系统
 
 > 23 个 AI Agent 协同工作，从研究问题到 LaTeX 论文，全流程自动化。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
-[![Version](https://img.shields.io/badge/version-1.5.0-green)](package.json)
+[![Version](https://img.shields.io/badge/version-2.0.0-green)](package.json)
 
 **Scholarium** 是一个 Multi-Agent 学术论文写作引擎。你输入一个研究方向，23 个专用 AI Agent 会在 **5 层苏格拉底对话**中帮你聚焦研究问题，通过**思维导图三轮发散**定位创新点，生成大纲并逐节撰写，经过 **18 维审计** + **6 维 AI 检测** + **7 代理同行评审**后，最终输出可编译的 LaTeX 论文。
 
@@ -111,24 +111,48 @@ open http://localhost:3456
 ```
 Scholarium/
 ├── src/
-│   ├── agents/         # 23 个 AI Agent
-│   ├── anti-ai/        # 6 维 AI 检测 + 智能改写
-│   ├── audit/          # 18 维质量审计
-│   ├── bible/          # 论文事实 Bible（含上下文选择性加载）
-│   ├── embedding/      # Embedding 引擎（本地/OpenAI/DeepSeek）
-│   ├── figures/        # Mermaid / LaTeX / matplotlib 图表
-│   ├── librarian/      # 引用管理 + 外部搜索 + 速率限制
+│   ├── server/             # Modular HTTP server
+│   │   ├── context.ts      # Shared server context & types
+│   │   ├── middleware/      # CORS, error handler, logger, body parser
+│   │   ├── routes/         # Modular route handlers
+│   │   │   ├── llm.ts      # LLM config & test routes
+│   │   │   ├── mindmap.ts  # MindMap routes
+│   │   │   ├── papers.ts   # Paper CRUD routes
+│   │   │   ├── sections.ts # Section operation routes
+│   │   │   ├── citations.ts# Citation management routes
+│   │   │   ├── bible.ts    # Bible routes
+│   │   │   ├── review.ts   # Peer review routes
+│   │   │   ├── socratic.ts # Socratic dialogue routes
+│   │   │   ├── integrity.ts# Integrity check routes
+│   │   │   ├── passport.ts # Passport routes
+│   │   │   ├── checkpoint.ts # Checkpoint routes
+│   │   │   ├── tasks.ts    # Task management routes
+│   │   │   ├── stats.ts    # Statistics routes
+│   │   │   ├── health.ts   # Health check routes
+│   │   │   └── static.ts   # Static file serving
+│   │   └── utils/          # Shared utilities
+│   │       ├── helpers.ts  # HTTP helpers (json, error, parseBody)
+│   │       └── latex-to-md.ts # LaTeX conversion
+│   ├── agents/         # 23 AI Agents
+│   ├── anti-ai/        # 6-dim AI detection + rewriting
+│   ├── audit/          # 18-dim quality audit
+│   ├── bible/          # Paper fact Bible
+│   ├── embedding/      # Embedding engine
+│   ├── figures/        # Chart generation
+│   ├── librarian/      # Citation management
 │   ├── llm/            # LLM Client + Router
-│   ├── mindmap/        # 思维导图 HTTP/SSE 服务
-│   ├── models/         # 输入治理（7 规则）
-│   ├── pipeline/       # Agent Loop 自主编排
-│   ├── review/         # 7 代理同行评审
-│   ├── types/          # 共享类型系统
-│   ├── utils/          # 日志 + 速率限制器
-│   └── server.ts       # 统一 API 服务
-├── frontend/           # React + Vite 静态工作台
-├── templates/          # 6 种期刊 LaTeX 模板
-├── scholarium.config.json  # LLM 配置
+│   ├── mindmap/        # MindMap service
+│   ├── models/         # Input governance
+│   ├── pipeline/       # Agent orchestration
+│   ├── review/         # 7-agent peer review
+│   ├── types/          # Shared type system
+│   ├── utils/          # Logger + rate limiter
+│   ├── __tests__/      # Test suites (vitest)
+│   └── server.ts       # Server entry point (modular orchestrator)
+├── .github/workflows/  # CI/CD (GitHub Actions)
+├── frontend/           # React + Vite workspace
+├── templates/          # Journal LaTeX templates
+├── scholarium.config.json
 └── package.json
 ```
 
@@ -137,9 +161,14 @@ Scholarium/
 ## ⚙️ 常用命令
 
 ```bash
-npm run serve         # 启动开发服务器（API + 前端）
-npm run typecheck     # TypeScript 类型检查
-npm run test:mock     # Mock 测试（无需网络）
+npm run serve          # 启动开发服务器（API + 前端）
+npm run typecheck      # TypeScript 类型检查
+npm run test           # 运行 vitest 测试
+npm run test:mock      # Mock 测试（无需网络）
+npm run lint           # ESLint 检查
+npm run lint:fix       # ESLint 自动修复
+npm run format         # Prettier 格式化
+npm run format:check   # Prettier 检查
 ```
 
 ---
@@ -158,6 +187,8 @@ npm run test:mock     # Mock 测试（无需网络）
 | `POST /api/socratic/start` | 启动苏格拉底引导 |
 | `POST /api/review/:id/start` | 启动同行评审 |
 | `POST /api/citations/search` | 多源文献搜索 |
+| `GET /api/health` | 健康状态检查 |
+| `GET /api/health/ready` | 就绪探针（DB + LLM 检查） |
 
 完整 API 参见 [API 概览](https://github.com/Gary23333/Scholarium#readme)。
 
@@ -170,6 +201,25 @@ npm run test:mock     # Mock 测试（无需网络）
 - **LLM**: DeepSeek / OpenAI / Anthropic, 可拔插 Provider
 - **存储**: JSON 文件持久化, 原子写入
 - **嵌入**: 本地 TF-IDF / OpenAI text-embedding-3 / DeepSeek Embedding
+- **测试**: Vitest
+- **代码检查**: ESLint 9+ (typescript-eslint)
+- **格式化**: Prettier
+- **CI/CD**: GitHub Actions
+
+---
+
+## 🆕 v2.0 更新
+
+| 变更 | 说明 |
+|------|------|
+| 🏗️ **模块化服务器架构** | server.ts 从 2276 行精简至 325 行，拆分为独立模块 |
+| 🛣️ **14 个路由模块** | 清晰的职责分离，每个路由独立维护 |
+| 🚨 **统一错误处理** | AppError 层级体系，一致的错误响应格式 |
+| 💚 **健康检查端点** | `/api/health` + `/api/health/ready` 就绪探针 |
+| 🔍 **ESLint + Prettier** | ESLint 9+ (typescript-eslint) + Prettier 代码风格统一 |
+| 🧪 **Vitest 测试套件** | 72 个测试用例，覆盖核心逻辑 |
+| ⚙️ **GitHub Actions CI/CD** | 自动化构建、检查与测试流水线 |
+| 📐 **TypeScript 严格模式** | 启用 strict 模式 + Node.js 类型定义 |
 
 ---
 

@@ -15,7 +15,10 @@ export class ResearchQuestionAgent extends BaseAgent<RQAgentInput, ResearchBrief
   readonly name = 'ResearchQuestion';
   private router?: LLMRouter;
 
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: RQAgentInput): Promise<ResearchBrief> {
     if (!this.router) return this.mockExecute(input);
@@ -53,9 +56,13 @@ ${commitments.map((c, idx) => `${idx + 1}. ${c}`).join('\n')}
 
     try {
       const content = await this.router.complete('researchQuestion', systemPrompt, userPrompt, {
-        temperature: 0.2, maxTokens: 1024,
+        temperature: 0.2,
+        maxTokens: 1024,
       });
-      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const cleaned = content
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
       const parsed = JSON.parse(cleaned);
       return { ...parsed, generatedAt: new Date().toISOString() };
     } catch (e) {
@@ -78,16 +85,8 @@ ${commitments.map((c, idx) => `${idx + 1}. ${c}`).join('\n')}
         relevant: 4,
       },
       scopeBoundaries: {
-        inScope: [
-          `${topic}的理论分析`,
-          '相关实证数据的收集与分析',
-          '与现有研究的对比',
-        ],
-        outOfScope: [
-          '跨文化比较研究',
-          '长期纵向追踪',
-          '政策建议的具体实施',
-        ],
+        inScope: [`${topic}的理论分析`, '相关实证数据的收集与分析', '与现有研究的对比'],
+        outOfScope: ['跨文化比较研究', '长期纵向追踪', '政策建议的具体实施'],
       },
       subQuestions: [
         `${topic}的现有研究有哪些主要发现和局限？`,

@@ -17,8 +17,15 @@ export type BibleCategory =
   | 'arguments';
 
 export const BIBLE_CATEGORIES: BibleCategory[] = [
-  'data', 'terminology', 'citations', 'experiments',
-  'formulas', 'claims', 'figures', 'variables', 'arguments',
+  'data',
+  'terminology',
+  'citations',
+  'experiments',
+  'formulas',
+  'claims',
+  'figures',
+  'variables',
+  'arguments',
 ];
 
 export interface BibleEntry {
@@ -84,10 +91,23 @@ export interface AgentOptions {
 }
 
 export type PipelinePhase =
-  | 'socratic' | 'planning' | 'architecting' | 'writing' | 'observing'
-  | 'normalizing' | 'auditing' | 'anti_ai' | 'integrity_check'
-  | 'integrity_gate' | 'review' | 'revision' | 'rereview'
-  | 'saving' | 'full_paper_audit' | 'latex_compile' | 'finalizing'
+  | 'socratic'
+  | 'planning'
+  | 'architecting'
+  | 'writing'
+  | 'observing'
+  | 'normalizing'
+  | 'auditing'
+  | 'anti_ai'
+  | 'integrity_check'
+  | 'integrity_gate'
+  | 'review'
+  | 'revision'
+  | 'rereview'
+  | 'saving'
+  | 'full_paper_audit'
+  | 'latex_compile'
+  | 'finalizing'
   | 'process_summary';
 
 export interface PipelineRun {
@@ -476,11 +496,19 @@ export interface LiteratureSearchResult {
 // ═══════════════════════════════════════════════════════════════
 
 export type AuditDimension =
-  | 'logic_consistency' | 'citation_integrity' | 'terminology_consistency'
-  | 'data_veracity' | 'math_correctness' | 'structure_integrity'
-  | 'academic_format' | 'language_quality'
-  | 'claim_evidence_chain' | 'inter_section_consistency'
-  | 'narrative_flow' | 'novelty_alignment' | 'data_fidelity';
+  | 'logic_consistency'
+  | 'citation_integrity'
+  | 'terminology_consistency'
+  | 'data_veracity'
+  | 'math_correctness'
+  | 'structure_integrity'
+  | 'academic_format'
+  | 'language_quality'
+  | 'claim_evidence_chain'
+  | 'inter_section_consistency'
+  | 'narrative_flow'
+  | 'novelty_alignment'
+  | 'data_fidelity';
 
 export type VoteConsensus = 'confirmed' | 'probable' | 'possible';
 export type Severity = 'critical' | 'warning' | 'info';
@@ -571,14 +599,28 @@ export interface AuditResult {
 // ═══════════════════════════════════════════════════════════════
 
 export interface DetectionConfig {
-  weights: { pattern: number; burstiness: number; perplexity: number; ngramDiversity: number; semanticConsistency: number; stylisticFingerprint: number };
+  weights: {
+    pattern: number;
+    burstiness: number;
+    perplexity: number;
+    ngramDiversity: number;
+    semanticConsistency: number;
+    stylisticFingerprint: number;
+  };
   threshold: number;
   maxRewriteRounds: number;
   mockMode?: boolean;
 }
 
 export const DEFAULT_DETECTION_CONFIG: DetectionConfig = {
-  weights: { pattern: 0.2, burstiness: 0.2, perplexity: 0.2, ngramDiversity: 0.15, semanticConsistency: 0.1, stylisticFingerprint: 0.15 },
+  weights: {
+    pattern: 0.2,
+    burstiness: 0.2,
+    perplexity: 0.2,
+    ngramDiversity: 0.15,
+    semanticConsistency: 0.1,
+    stylisticFingerprint: 0.15,
+  },
   threshold: 0.5,
   maxRewriteRounds: 3,
   mockMode: false,
@@ -901,30 +943,66 @@ export interface ArtifactVersion {
 // ═══════════════════════════════════════════════════════════════
 
 export type {
-  ResearchBrief, MethodologyBlueprint, FinerScore, ScopeBoundaries,
-  SocraticSession, SocraticTurn, SocraticLayer, SocraticMode,
-  DialogueHealth, SocraticSessionStatus, TurnRole, TurnTag,
-  SocraticStartRequest, SocraticRespondRequest, SocraticRespondResponse,
+  ResearchBrief,
+  MethodologyBlueprint,
+  FinerScore,
+  ScopeBoundaries,
+  SocraticSession,
+  SocraticTurn,
+  SocraticLayer,
+  SocraticMode,
+  DialogueHealth,
+  SocraticSessionStatus,
+  TurnRole,
+  TurnTag,
+  SocraticStartRequest,
+  SocraticRespondRequest,
+  SocraticRespondResponse,
   SocraticSummaryResponse,
 } from './research.ts';
 
 export type {
-  ReviewReport, ReviewSession, EditorialDecision, RevisionItem,
-  TraceabilityRow, ReviewerConfig, ReviewerConfigCard, ReviewFinding,
-  DevilsAdvocateReport, RevisionRound, ReviewVerdict, ConsensusLevel,
-  ReviewStage, ReviewerRole, FindingSeverity, ReviewStartRequest, ReReviewRequest,
+  ReviewReport,
+  ReviewSession,
+  EditorialDecision,
+  RevisionItem,
+  TraceabilityRow,
+  ReviewerConfig,
+  ReviewerConfigCard,
+  ReviewFinding,
+  DevilsAdvocateReport,
+  RevisionRound,
+  ReviewVerdict,
+  ConsensusLevel,
+  ReviewStage,
+  ReviewerRole,
+  FindingSeverity,
+  ReviewStartRequest,
+  ReReviewRequest,
 } from './review.ts';
 
 export type {
-  IntegrityGateResult, FailureModeReport, VerificationResult,
-  IntegrityPhaseResult, ClaimAuditResult, ClaimAuditSummary,
-  FailureMode, FailureModeStatus, VerificationVerdict, IntegrityPhase,
+  IntegrityGateResult,
+  FailureModeReport,
+  VerificationResult,
+  IntegrityPhaseResult,
+  ClaimAuditResult,
+  ClaimAuditSummary,
+  FailureMode,
+  FailureModeStatus,
+  VerificationVerdict,
+  IntegrityPhase,
   ClaimAnchor,
 } from './integrity.ts';
 
 export type {
-  MaterialPassport, ProcessSummary, CollaborationQuality,
-  AISelfReflection, StageLogEntry, Checkpoint, ResetBoundary,
+  MaterialPassport,
+  ProcessSummary,
+  CollaborationQuality,
+  AISelfReflection,
+  StageLogEntry,
+  Checkpoint,
+  ResetBoundary,
   ResetBoundaryKind,
 } from './passport.ts';
 
@@ -932,12 +1010,7 @@ export type {
 // Agent Loop
 // ═══════════════════════════════════════════════════════════════
 
-export type AgentLoopAction =
-  | 'write_section'
-  | 'audit_section'
-  | 'revise_section'
-  | 'check_bible'
-  | 'get_status';
+export type AgentLoopAction = 'write_section' | 'audit_section' | 'revise_section' | 'check_bible' | 'get_status';
 
 export interface AgentLoopStep {
   action: AgentLoopAction;

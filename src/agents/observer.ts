@@ -14,7 +14,10 @@ export class ObserverAgent extends BaseAgent<ObserverInput, ObserverExtraction> 
   readonly name = 'Observer';
   private router?: LLMRouter;
 
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: ObserverInput): Promise<ObserverExtraction> {
     if (!this.router) return this.mockExecute(input);
@@ -55,10 +58,21 @@ ${draft.substring(0, 6000)}
 
 Extract all structured elements from this draft following the JSON schema above.`;
 
-    const content = await this.router.complete('observer', systemPrompt, userPrompt, { temperature: 0, maxTokens: 8192, timeout: 120000 });
-    const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    try { return JSON.parse(cleaned) as ObserverExtraction; }
-    catch (e) { logger.warn('Observer JSON parse failed', String(e)); return this.mockExecute(input); }
+    const content = await this.router.complete('observer', systemPrompt, userPrompt, {
+      temperature: 0,
+      maxTokens: 8192,
+      timeout: 120000,
+    });
+    const cleaned = content
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+    try {
+      return JSON.parse(cleaned) as ObserverExtraction;
+    } catch (e) {
+      logger.warn('Observer JSON parse failed', String(e));
+      return this.mockExecute(input);
+    }
   }
 
   protected async mockExecute(input: ObserverInput): Promise<ObserverExtraction> {
@@ -71,24 +85,49 @@ Extract all structured elements from this draft following the JSON schema above.
     const formulaRegex = /\\begin\{equation\}([\s\S]*?)\\end\{equation\}/g;
     let match;
     while ((match = formulaRegex.exec(draft)) !== null) {
-      entries.push({ category: 'formulas', key: `${section.id}-formula-${idx++}`, value: match[1].trim(), confidence: 1.0 });
-      protectedSpans.push({ type: 'formula', start: match.index, end: match.index + match[0].length, content: match[0] });
+      entries.push({
+        category: 'formulas',
+        key: `${section.id}-formula-${idx++}`,
+        value: match[1].trim(),
+        confidence: 1.0,
+      });
+      protectedSpans.push({
+        type: 'formula',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[0],
+      });
     }
 
     // Inline formulas
     const inlineRegex = /\$([^$]+)\$/g;
     while ((match = inlineRegex.exec(draft)) !== null) {
-      entries.push({ category: 'formulas', key: `${section.id}-inline-${idx++}`, value: match[1].trim(), confidence: 1.0 });
-      protectedSpans.push({ type: 'formula', start: match.index, end: match.index + match[0].length, content: match[0] });
+      entries.push({
+        category: 'formulas',
+        key: `${section.id}-inline-${idx++}`,
+        value: match[1].trim(),
+        confidence: 1.0,
+      });
+      protectedSpans.push({
+        type: 'formula',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[0],
+      });
     }
 
     // Citations
     const citeRegex = /\\cite\{([^}]+)\}/g;
     while ((match = citeRegex.exec(draft)) !== null) {
-      for (const key of match[1].split(',').map(k => k.trim())) {
+      for (const key of match[1].split(',').map((k) => k.trim())) {
         entries.push({ category: 'citations', key, value: `Citation ${key} in ${section.id}`, confidence: 1.0 });
       }
-      protectedSpans.push({ type: 'citation', start: match.index, end: match.index + match[0].length, content: match[0] });
+      protectedSpans.push({
+        type: 'citation',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[0],
+      });
     }
 
     // Data points
@@ -104,23 +143,42 @@ Extract all structured elements from this draft following the JSON schema above.
     while ((match = termRegex.exec(draft)) !== null) {
       if (!seen.has(match[1])) {
         seen.add(match[1]);
-        entries.push({ category: 'terminology', key: match[1].toLowerCase().replace(/\s+/g, '-'), value: match[1], confidence: 0.8 });
+        entries.push({
+          category: 'terminology',
+          key: match[1].toLowerCase().replace(/\s+/g, '-'),
+          value: match[1],
+          confidence: 0.8,
+        });
       }
     }
 
     // Claims
     if (/\b(achieves|outperforms|demonstrates|proves)\b/i.test(draft)) {
-      entries.push({ category: 'claims', key: `${section.id}-main-claim`, value: 'Performance or contribution claims found', confidence: 0.85 });
+      entries.push({
+        category: 'claims',
+        key: `${section.id}-main-claim`,
+        value: 'Performance or contribution claims found',
+        confidence: 0.85,
+      });
     }
 
     return { entries, protectedSpans };
   }
 
-  verifyIntegrity(before: string, after: string, spans: ProtectedSpan[]): { ok: boolean; violations: Array<{ type: string; expected: string; actual: string; location: string }> } {
+  verifyIntegrity(
+    before: string,
+    after: string,
+    spans: ProtectedSpan[],
+  ): { ok: boolean; violations: Array<{ type: string; expected: string; actual: string; location: string }> } {
     const violations: Array<{ type: string; expected: string; actual: string; location: string }> = [];
     for (const span of spans) {
       if (!after.includes(span.content)) {
-        violations.push({ type: span.type, expected: span.content, actual: '[not found]', location: `span-${span.start}-${span.end}` });
+        violations.push({
+          type: span.type,
+          expected: span.content,
+          actual: '[not found]',
+          location: `span-${span.start}-${span.end}`,
+        });
       }
     }
     return { ok: violations.length === 0, violations };

@@ -19,8 +19,12 @@ export function canTransition(from: SectionWriteState, to: SectionWriteState): b
 }
 
 export function resolveStateAfterRound(options: {
-  round: number; maxRounds: number; auditOk: boolean;
-  crossValOk: boolean; aiOk: boolean; integrityOk: boolean;
+  round: number;
+  maxRounds: number;
+  auditOk: boolean;
+  crossValOk: boolean;
+  aiOk: boolean;
+  integrityOk: boolean;
   aiChangedSignificantly: boolean;
 }): SectionWriteState {
   const { round, maxRounds, auditOk, crossValOk, aiOk, integrityOk, aiChangedSignificantly } = options;

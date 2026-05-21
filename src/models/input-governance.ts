@@ -2,8 +2,12 @@
 // Inspired by InkOS InputGovernance (20+ rules adapted for academic papers)
 
 import type {
-  GovernanceRule, GovernanceViolation, GovernanceResult,
-  WriterInput, BibleEntry, OutlineSection,
+  GovernanceRule,
+  GovernanceViolation,
+  GovernanceResult,
+  WriterInput,
+  BibleEntry,
+  OutlineSection,
 } from '../types/index.ts';
 
 export interface GovernanceContext {
@@ -18,15 +22,17 @@ export class InputGovernance {
   private enabledRules: Set<GovernanceRule>;
 
   constructor(enabled?: GovernanceRule[]) {
-    this.enabledRules = new Set(enabled ?? [
-      'no_fabricated_citations',
-      'no_method_result_confusion',
-      'must_reference_bible_facts',
-      'no_undefined_terms',
-      'no_self_references',
-      'no_empty_transitions',
-      'data_precision_check',
-    ]);
+    this.enabledRules = new Set(
+      enabled ?? [
+        'no_fabricated_citations',
+        'no_method_result_confusion',
+        'must_reference_bible_facts',
+        'no_undefined_terms',
+        'no_self_references',
+        'no_empty_transitions',
+        'data_precision_check',
+      ],
+    );
   }
 
   validate(input: WriterInput, context: GovernanceContext): GovernanceResult {
@@ -54,9 +60,9 @@ export class InputGovernance {
       violations.push(...this.checkDataPrecision(input, context));
     }
 
-    const critical = violations.filter(v => v.severity === 'critical').length;
-    const warning = violations.filter(v => v.severity === 'warning').length;
-    const info = violations.filter(v => v.severity === 'info').length;
+    const critical = violations.filter((v) => v.severity === 'critical').length;
+    const warning = violations.filter((v) => v.severity === 'warning').length;
+    const info = violations.filter((v) => v.severity === 'info').length;
 
     return {
       passed: critical === 0,
@@ -71,7 +77,7 @@ export class InputGovernance {
     const citeRegex = /\\cite\{([^}]+)\}/g;
     let match;
     while ((match = citeRegex.exec(input.previousDraft)) !== null) {
-      for (const k of match[1].split(',').map(s => s.trim())) {
+      for (const k of match[1].split(',').map((s) => s.trim())) {
         if (!ctx.approvedCiteKeys.has(k)) {
           result.push({
             rule: 'no_fabricated_citations',
@@ -91,7 +97,8 @@ export class InputGovernance {
     if (!input.previousDraft) return result;
     const sectionId = ctx.section.id;
     if (sectionId.startsWith('3')) {
-      const resultPatterns = /(我们的方法达到了|our method achieves|实验结果表明|experimental results show|我们取得了|we achieve|性能提升|performance improvement|准确率达到|accuracy reaches)/gi;
+      const resultPatterns =
+        /(我们的方法达到了|our method achieves|实验结果表明|experimental results show|我们取得了|we achieve|性能提升|performance improvement|准确率达到|accuracy reaches)/gi;
       let m;
       while ((m = resultPatterns.exec(input.previousDraft)) !== null) {
         result.push({
@@ -105,7 +112,11 @@ export class InputGovernance {
       }
     }
     if (sectionId.startsWith('4') || sectionId.startsWith('5')) {
-      if (/(我们提出的算法|our proposed algorithm|我们设计的网络|our designed network|模型架构)/i.test(input.previousDraft)) {
+      if (
+        /(我们提出的算法|our proposed algorithm|我们设计的网络|our designed network|模型架构)/i.test(
+          input.previousDraft,
+        )
+      ) {
         result.push({
           rule: 'no_method_result_confusion',
           severity: 'warning',
@@ -196,8 +207,16 @@ export class InputGovernance {
 
     // Check for vague self-references
     const patterns = [
-      { pattern: /as discussed above/gi, message: 'Vague self-reference "as discussed above".', suggestion: 'Replace with specific section reference (e.g., "as discussed in Section 2").' },
-      { pattern: /as mentioned earlier/gi, message: 'Vague self-reference "as mentioned earlier".', suggestion: 'Replace with specific section reference.' },
+      {
+        pattern: /as discussed above/gi,
+        message: 'Vague self-reference "as discussed above".',
+        suggestion: 'Replace with specific section reference (e.g., "as discussed in Section 2").',
+      },
+      {
+        pattern: /as mentioned earlier/gi,
+        message: 'Vague self-reference "as mentioned earlier".',
+        suggestion: 'Replace with specific section reference.',
+      },
       { pattern: /如前所述/gi, message: '模糊的自我指涉 "如前所述"。', suggestion: '替换为具体章节引用。' },
       { pattern: /上文提到/gi, message: '模糊的自我指涉 "上文提到"。', suggestion: '替换为具体章节引用。' },
     ];
@@ -286,20 +305,12 @@ export function buildGovernanceContext(
   previousSections: Array<{ id: string; title: string; summary: string }>,
 ): GovernanceContext {
   const approvedCiteKeys = new Set(
-    bibleEntries
-      .filter(e => e.category === 'citations' && e.approvalStatus === 'approved')
-      .map(e => e.key),
+    bibleEntries.filter((e) => e.category === 'citations' && e.approvalStatus === 'approved').map((e) => e.key),
   );
   const approvedTermKeys = new Set(
-    bibleEntries
-      .filter(e => e.category === 'terminology')
-      .map(e => e.key.toLowerCase()),
+    bibleEntries.filter((e) => e.category === 'terminology').map((e) => e.key.toLowerCase()),
   );
-  const approvedDataKeys = new Map(
-    bibleEntries
-      .filter(e => e.category === 'data')
-      .map(e => [e.key, e.value]),
-  );
+  const approvedDataKeys = new Map(bibleEntries.filter((e) => e.category === 'data').map((e) => [e.key, e.value]));
 
   return { approvedCiteKeys, approvedTermKeys, approvedDataKeys, section, previousSections };
 }

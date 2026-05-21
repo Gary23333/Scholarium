@@ -43,8 +43,11 @@ export class NormalizerAgent extends BaseAgent<NormalizerInput, NormalizeResult>
 
     if (!overBudget && !underBudget) {
       return {
-        normalizedDraft: draft, newWordCount: currentWordCount,
-        changes: [], overBudgetRatio: 0, needsArchitectFeedback: false,
+        normalizedDraft: draft,
+        newWordCount: currentWordCount,
+        changes: [],
+        overBudgetRatio: 0,
+        needsArchitectFeedback: false,
       };
     }
 
@@ -53,9 +56,11 @@ export class NormalizerAgent extends BaseAgent<NormalizerInput, NormalizeResult>
 Target word count: ${targetWordCount}
 Current word count: ${currentWordCount}
 
-${overBudget
-  ? 'COMPRESSION RULES:\n- Remove redundant phrases, filler words, and verbose expressions\n- Merge short sentences where appropriate\n- Preserve ALL citations (\\\\cite{...}), equations, and technical terms\n- Do NOT change meaning or remove key claims\n- Keep section headers and labels intact'
-  : 'EXPANSION RULES:\n- Add clarifying examples, rhetorical questions, or explanatory sentences\n- Expand abbreviations on first use\n- Add brief transitions between paragraphs\n- Preserve ALL citations (\\\\cite{...}), equations, and technical terms\n- Do NOT add fabricated data or false claims\n- Keep section headers and labels intact'}
+${
+  overBudget
+    ? 'COMPRESSION RULES:\n- Remove redundant phrases, filler words, and verbose expressions\n- Merge short sentences where appropriate\n- Preserve ALL citations (\\\\cite{...}), equations, and technical terms\n- Do NOT change meaning or remove key claims\n- Keep section headers and labels intact'
+    : 'EXPANSION RULES:\n- Add clarifying examples, rhetorical questions, or explanatory sentences\n- Expand abbreviations on first use\n- Add brief transitions between paragraphs\n- Preserve ALL citations (\\\\cite{...}), equations, and technical terms\n- Do NOT add fabricated data or false claims\n- Keep section headers and labels intact'
+}
 
 Output ONLY the modified LaTeX content, no explanations.`;
 
@@ -68,12 +73,29 @@ ${draft.substring(0, 8000)}
 Please ${action} this text to approximately ${targetWordCount} words while preserving all technical content.`;
 
     try {
-      const content = await this.router!.complete('normalizer', systemPrompt, userPrompt, { temperature: 0.2, maxTokens: 16384, timeout: 300000 });
-      const cleaned = content.replace(/^```(?:latex)?\n?/i, '').replace(/```\n?$/i, '').trim();
+      const content = await this.router!.complete('normalizer', systemPrompt, userPrompt, {
+        temperature: 0.2,
+        maxTokens: 16384,
+        timeout: 300000,
+      });
+      const cleaned = content
+        .replace(/^```(?:latex)?\n?/i, '')
+        .replace(/```\n?$/i, '')
+        .trim();
       const newWordCount = cleaned.split(/\s+/).length;
       return {
-        normalizedDraft: cleaned, newWordCount,
-        changes: [{ category: 'terminology', key: action, oldValue: draft.substring(0, 100), newValue: cleaned.substring(0, 100), sourceSectionId: 'unknown', reason: `${action === 'compress' ? 'Compressed' : 'Expanded'} from ${currentWordCount} to ${newWordCount} words (target: ${targetWordCount})` }],
+        normalizedDraft: cleaned,
+        newWordCount,
+        changes: [
+          {
+            category: 'terminology',
+            key: action,
+            oldValue: draft.substring(0, 100),
+            newValue: cleaned.substring(0, 100),
+            sourceSectionId: 'unknown',
+            reason: `${action === 'compress' ? 'Compressed' : 'Expanded'} from ${currentWordCount} to ${newWordCount} words (target: ${targetWordCount})`,
+          },
+        ],
         overBudgetRatio: Math.max(0, (newWordCount - targetWordCount) / targetWordCount),
         needsArchitectFeedback: overBudget && newWordCount > targetWordCount * 1.2,
       };
@@ -97,8 +119,10 @@ Please ${action} this text to approximately ${targetWordCount} words while prese
       const compressed = this.compress(normalizedDraft);
       if (compressed.length < normalizedDraft.length) {
         changes.push({
-          category: 'terminology', key: 'compression',
-          oldValue: draft.substring(0, 100), newValue: compressed.substring(0, 100),
+          category: 'terminology',
+          key: 'compression',
+          oldValue: draft.substring(0, 100),
+          newValue: compressed.substring(0, 100),
           sourceSectionId: 'unknown',
           reason: `Compressed from ${currentWordCount} to ~${compressed.split(/\s+/).length} words`,
         });
@@ -111,8 +135,10 @@ Please ${action} this text to approximately ${targetWordCount} words while prese
       const expanded = this.expand(normalizedDraft, currentWordCount, targetWordCount);
       if (expanded.length > normalizedDraft.length) {
         changes.push({
-          category: 'terminology', key: 'expansion',
-          oldValue: draft.substring(0, 100), newValue: expanded.substring(0, 100),
+          category: 'terminology',
+          key: 'expansion',
+          oldValue: draft.substring(0, 100),
+          newValue: expanded.substring(0, 100),
           sourceSectionId: 'unknown',
           reason: `Expanded from ${currentWordCount} toward target ${targetWordCount} words`,
         });
@@ -156,16 +182,10 @@ Please ${action} this text to approximately ${targetWordCount} words while prese
     );
 
     // Pattern 2: Add specificity to vague statements
-    expanded = expanded.replace(
-      /(我们|we)\s+(提出|propose|设计|design)\s/gi,
-      '我们提出',
-    );
+    expanded = expanded.replace(/(我们|we)\s+(提出|propose|设计|design)\s/gi, '我们提出');
 
     // Pattern 3: Expand result statements with context
-    expanded = expanded.replace(
-      /(达到|achieves|达到|获得|obtains?)\s+(\d+\.?\d*)\s*(%|x|×)/gi,
-      '达到了 $2$%',
-    );
+    expanded = expanded.replace(/(达到|achieves|达到|获得|obtains?)\s+(\d+\.?\d*)\s*(%|x|×)/gi, '达到了 $2$%');
 
     // If still significantly under, add explanatory sentence
     if (expanded.split(/\s+/).length < target * 0.7) {
@@ -176,7 +196,9 @@ Please ${action} this text to approximately ${targetWordCount} words while prese
       // Add content expansion for very short drafts
       const wordCount = expanded.split(/\s+/).length;
       if (wordCount < target * 0.5) {
-        expanded = expanded + '\n\n% TODO: Expand with detailed analysis and discussion of the methodology and its implications for the research field.';
+        expanded =
+          expanded +
+          '\n\n% TODO: Expand with detailed analysis and discussion of the methodology and its implications for the research field.';
       }
     }
 

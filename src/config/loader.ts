@@ -65,7 +65,9 @@ export function validateConfig(config: ScholariumConfig): ConfigValidationResult
     const provider = inferProvider(route.model);
     const providerConfig = config.llm.providers[provider];
     if (!providerConfig?.apiKey) {
-      warnings.push(`Provider "${provider}" for agent "${agent}" has no API key; real LLM calls will fail unless configured at runtime.`);
+      warnings.push(
+        `Provider "${provider}" for agent "${agent}" has no API key; real LLM calls will fail unless configured at runtime.`,
+      );
     }
   }
   if (config.pipeline.maxAuditRounds < 1) errors.push('pipeline.maxAuditRounds must be >= 1');
@@ -113,5 +115,8 @@ function inferProvider(model: string): string {
 }
 
 function normalizeAgentName(agentName: string): string {
-  return agentName.trim().replace(/[-_\s]+([a-z])/g, (_, c) => c.toUpperCase()).replace(/^([A-Z])/, c => c.toLowerCase());
+  return agentName
+    .trim()
+    .replace(/[-_\s]+([a-z])/g, (_, c) => c.toUpperCase())
+    .replace(/^([A-Z])/, (c) => c.toLowerCase());
 }

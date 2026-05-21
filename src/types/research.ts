@@ -1,11 +1,11 @@
 // Research Guidance Types — Socratic mentor, RQ Brief, Methodology Blueprint
 
 export interface FinerScore {
-  feasible: number;      // 1-5 可行性
-  interesting: number;   // 1-5 趣味性
-  novel: number;         // 1-5 新颖性
-  ethical: number;       // 1-5 伦理性
-  relevant: number;      // 1-5 相关性
+  feasible: number; // 1-5 可行性
+  interesting: number; // 1-5 趣味性
+  novel: number; // 1-5 新颖性
+  ethical: number; // 1-5 伦理性
+  relevant: number; // 1-5 相关性
 }
 
 export interface ScopeBoundaries {

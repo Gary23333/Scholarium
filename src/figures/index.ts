@@ -31,7 +31,7 @@ export interface TableData {
 export async function renderMermaid(
   diagram: string,
   outputPath?: string,
-  options: MermaidOptions = {}
+  options: MermaidOptions = {},
 ): Promise<string> {
   const format = options.format ?? 'svg';
   const mmdFile = outputPath ?? join('/tmp', `scholarium-${Date.now()}.mmd`);
@@ -42,11 +42,7 @@ export async function renderMermaid(
 
     // Try mmdc CLI first
     try {
-      const mmdcArgs = [
-        '-i', mmdFile,
-        '-o', outputFile,
-        '-t', options.theme ?? 'default',
-      ];
+      const mmdcArgs = ['-i', mmdFile, '-o', outputFile, '-t', options.theme ?? 'default'];
       if (options.backgroundColor) {
         mmdcArgs.push('-C', options.backgroundColor);
       }
@@ -101,14 +97,14 @@ export function formatTable(data: TableData, options: TableOptions = {}): string
   lines.push('    \\hline');
 
   // Header
-  lines.push('    ' + data.headers.map(h => escapeLaTeX(h)).join(' & ') + ' \\\\');
+  lines.push('    ' + data.headers.map((h) => escapeLaTeX(h)).join(' & ') + ' \\\\');
   lines.push('    \\hline');
 
   // Rows
   for (const row of data.rows) {
     const padded = [...row];
     while (padded.length < ncols) padded.push('');
-    lines.push('    ' + padded.map(c => escapeLaTeX(c)).join(' & ') + ' \\\\');
+    lines.push('    ' + padded.map((c) => escapeLaTeX(c)).join(' & ') + ' \\\\');
   }
 
   lines.push('    \\hline');
@@ -122,16 +118,11 @@ export function formatTable(data: TableData, options: TableOptions = {}): string
 // Quick data table (lists of objects)
 // ═══════════════════════════════════════════
 
-export function formatDataTable(
-  data: Record<string, unknown>[],
-  options: TableOptions = {}
-): string {
+export function formatDataTable(data: Record<string, unknown>[], options: TableOptions = {}): string {
   if (data.length === 0) return '% No data';
 
   const headers = Object.keys(data[0]);
-  const rows = data.map(row =>
-    headers.map(h => String(row[h] ?? ''))
-  );
+  const rows = data.map((row) => headers.map((h) => String(row[h] ?? '')));
 
   return formatTable({ headers, rows }, options);
 }
@@ -140,10 +131,7 @@ export function formatDataTable(
 // Matplotlib / Python chart rendering
 // ═══════════════════════════════════════════
 
-export async function renderMatplotlib(
-  code: string,
-  outputPath?: string
-): Promise<string> {
+export async function renderMatplotlib(code: string, outputPath?: string): Promise<string> {
   const outputFile = outputPath ?? join('/tmp', `scholarium-plot-${Date.now()}.png`);
 
   // Security: disallow dangerous Python functions
@@ -175,7 +163,9 @@ plt.close()
     });
 
     // Cleanup temp file
-    try { unlinkSync(tmpFile); } catch {}
+    try {
+      unlinkSync(tmpFile);
+    } catch {}
 
     if (existsSync(outputFile)) {
       return outputFile;
@@ -192,14 +182,18 @@ plt.close()
 // ═══════════════════════════════════════════
 
 function escapeLaTeX(s: string): string {
-  return s
-    .replace(/\\/g, '\\textbackslash{}')
-    .replace(/[&%$#_{}~^]/g, (m) => {
-      const map: Record<string, string> = {
-        '&': '\\&', '%': '\\%', '$': '\\$', '#': '\\#',
-        '_': '\\_', '{': '\\{', '}': '\\}', '~': '\\textasciitilde{}',
-        '^': '\\textasciicircum{}',
-      };
-      return map[m] ?? m;
-    });
+  return s.replace(/\\/g, '\\textbackslash{}').replace(/[&%$#_{}~^]/g, (m) => {
+    const map: Record<string, string> = {
+      '&': '\\&',
+      '%': '\\%',
+      $: '\\$',
+      '#': '\\#',
+      _: '\\_',
+      '{': '\\{',
+      '}': '\\}',
+      '~': '\\textasciitilde{}',
+      '^': '\\textasciicircum{}',
+    };
+    return map[m] ?? m;
+  });
 }

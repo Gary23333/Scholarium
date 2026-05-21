@@ -24,11 +24,21 @@ interface DBData {
 
 function emptyDB(): DBData {
   return {
-    papers: {}, sections: {}, bibleEntries: {}, auditRecords: {},
-    citations: {}, pipelineRuns: {}, humanReviewTasks: {},
-    mindmapSessions: {}, mindmapNodes: {},
-    reviewReports: {}, revisionHistory: {}, materialPassports: {},
-    socraticSessions: {}, resetBoundaries: {}, checkpoints: {},
+    papers: {},
+    sections: {},
+    bibleEntries: {},
+    auditRecords: {},
+    citations: {},
+    pipelineRuns: {},
+    humanReviewTasks: {},
+    mindmapSessions: {},
+    mindmapNodes: {},
+    reviewReports: {},
+    revisionHistory: {},
+    materialPassports: {},
+    socraticSessions: {},
+    resetBoundaries: {},
+    checkpoints: {},
   };
 }
 
@@ -41,22 +51,26 @@ export class ScholariumDB {
   constructor(dbPath: string, autoFlushMs = 2000) {
     this.filePath = dbPath;
     if (fs.existsSync(dbPath)) {
-      try { 
-        this.data = JSON.parse(fs.readFileSync(dbPath, 'utf-8')); 
+      try {
+        this.data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
         // Ensure all required fields exist
         const defaults = emptyDB();
         for (const key of Object.keys(defaults) as (keyof DBData)[]) {
           if (!this.data[key]) this.data[key] = defaults[key];
         }
+      } catch (e) {
+        logger.warn('Database load failed, using empty DB', String(e));
+        this.data = emptyDB();
       }
-      catch (e) { logger.warn('Database load failed, using empty DB', String(e)); this.data = emptyDB(); }
     } else {
       this.data = emptyDB();
       this.saveSync();
     }
     // Auto-flush dirty writes periodically
     if (autoFlushMs > 0) {
-      this.flushTimer = setInterval(() => { if (this.dirty) this.saveSync(); }, autoFlushMs);
+      this.flushTimer = setInterval(() => {
+        if (this.dirty) this.saveSync();
+      }, autoFlushMs);
     }
   }
 
@@ -75,51 +89,94 @@ export class ScholariumDB {
   }
 
   /** Mark dirty (will be flushed by timer or close()) */
-  private markDirty(): void { this.dirty = true; }
+  private markDirty(): void {
+    this.dirty = true;
+  }
 
   // Paper
   createPaper(id: string, title: string, targetJournal?: string): void {
     this.data.papers[id] = {
-      id, title, target_journal: targetJournal ?? null, status: 'draft',
-      research_brief: null, methodology: null, current_stage: 0, passport_hash: null,
+      id,
+      title,
+      target_journal: targetJournal ?? null,
+      status: 'draft',
+      research_brief: null,
+      methodology: null,
+      current_stage: 0,
+      passport_hash: null,
       socratic_session_id: null,
-      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     this.markDirty();
   }
-  getPaper(id: string): any { return this.data.papers[id]; }
+  getPaper(id: string): any {
+    return this.data.papers[id];
+  }
   updatePaperStatus(id: string, status: string): void {
-    if (this.data.papers[id]) { this.data.papers[id].status = status; this.data.papers[id].updated_at = new Date().toISOString(); this.markDirty(); }
+    if (this.data.papers[id]) {
+      this.data.papers[id].status = status;
+      this.data.papers[id].updated_at = new Date().toISOString();
+      this.markDirty();
+    }
   }
 
   // Section
   createSection(id: string, paperId: string, sectionNumber: number, title: string): void {
-    this.data.sections[id] = { id, paper_id: paperId, section_number: sectionNumber, title, content_tex: null, status: 'pending', version: 1 };
+    this.data.sections[id] = {
+      id,
+      paper_id: paperId,
+      section_number: sectionNumber,
+      title,
+      content_tex: null,
+      status: 'pending',
+      version: 1,
+    };
     this.markDirty();
   }
-  getSection(id: string): any { return this.data.sections[id]; }
+  getSection(id: string): any {
+    return this.data.sections[id];
+  }
   getSectionsByPaper(paperId: string): any[] {
-    return Object.values(this.data.sections).filter((s: any) => s.paper_id === paperId).sort((a: any, b: any) => a.section_number - b.section_number);
+    return Object.values(this.data.sections)
+      .filter((s: any) => s.paper_id === paperId)
+      .sort((a: any, b: any) => a.section_number - b.section_number);
   }
   updateSectionContent(id: string, contentTex: string): void {
-    if (this.data.sections[id]) { this.data.sections[id].content_tex = contentTex; this.data.sections[id].version++; this.markDirty(); }
+    if (this.data.sections[id]) {
+      this.data.sections[id].content_tex = contentTex;
+      this.data.sections[id].version++;
+      this.markDirty();
+    }
   }
   updateSectionStatus(id: string, status: string): void {
-    if (this.data.sections[id]) { this.data.sections[id].status = status; this.markDirty(); }
+    if (this.data.sections[id]) {
+      this.data.sections[id].status = status;
+      this.markDirty();
+    }
   }
 
   // Bible
   createBibleEntry(entry: any): void {
     this.data.bibleEntries[entry.id] = {
-      id: entry.id, paper_id: entry.paperId, category: entry.category, key: entry.key, value: entry.value,
-      source_section_id: entry.sourceSectionId ?? null, source_type: entry.sourceType ?? 'agent',
-      source_artifact_version: entry.sourceArtifactVersion ?? 1, confidence: entry.confidence ?? 1.0,
-      approval_status: entry.approvalStatus ?? 'approved', supersedes_entry_id: entry.supersedesEntryId ?? null,
+      id: entry.id,
+      paper_id: entry.paperId,
+      category: entry.category,
+      key: entry.key,
+      value: entry.value,
+      source_section_id: entry.sourceSectionId ?? null,
+      source_type: entry.sourceType ?? 'agent',
+      source_artifact_version: entry.sourceArtifactVersion ?? 1,
+      confidence: entry.confidence ?? 1.0,
+      approval_status: entry.approvalStatus ?? 'approved',
+      supersedes_entry_id: entry.supersedesEntryId ?? null,
       immutable: entry.immutable ? 1 : 0,
     };
     this.markDirty();
   }
-  getBibleEntry(id: string): any { return this.data.bibleEntries[id]; }
+  getBibleEntry(id: string): any {
+    return this.data.bibleEntries[id];
+  }
   getBibleEntriesByPaper(paperId: string): any[] {
     return Object.values(this.data.bibleEntries).filter((e: any) => e.paper_id === paperId);
   }
@@ -127,10 +184,15 @@ export class ScholariumDB {
     return Object.values(this.data.bibleEntries).filter((e: any) => e.paper_id === paperId && e.category === category);
   }
   getBibleEntryByKey(paperId: string, category: string, key: string): any {
-    const matches = Object.values(this.data.bibleEntries).filter((e: any) => e.paper_id === paperId && e.category === category && e.key === key);
+    const matches = Object.values(this.data.bibleEntries).filter(
+      (e: any) => e.paper_id === paperId && e.category === category && e.key === key,
+    );
     return matches.sort((a: any, b: any) => (b.source_artifact_version ?? 0) - (a.source_artifact_version ?? 0))[0];
   }
-  updateBibleEntry(id: string, updates: { key?: string; value?: string; category?: string; confidence?: number; approvalStatus?: string }): void {
+  updateBibleEntry(
+    id: string,
+    updates: { key?: string; value?: string; category?: string; confidence?: number; approvalStatus?: string },
+  ): void {
     if (this.data.bibleEntries[id]) {
       if (updates.key !== undefined) this.data.bibleEntries[id].key = updates.key;
       if (updates.value !== undefined) this.data.bibleEntries[id].value = updates.value;
@@ -166,10 +228,16 @@ export class ScholariumDB {
 
   // Pipeline runs
   createPipelineRun(run: any): void {
-    this.data.pipelineRuns[run.id] = { ...run, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    this.data.pipelineRuns[run.id] = {
+      ...run,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
     this.markDirty();
   }
-  getPipelineRun(id: string): any { return this.data.pipelineRuns[id]; }
+  getPipelineRun(id: string): any {
+    return this.data.pipelineRuns[id];
+  }
   updatePipelineRun(id: string, updates: any): void {
     if (this.data.pipelineRuns[id]) {
       Object.assign(this.data.pipelineRuns[id], updates, { updated_at: new Date().toISOString() });
@@ -233,15 +301,21 @@ export class ScholariumDB {
 
   // Section by outline section id (the section id from the outline, not the DB section id)
   getSectionByOutlineId(paperId: string, outlineSectionId: string): any {
-    return Object.values(this.data.sections).find((s: any) =>
-      s.paper_id === paperId && s.outline_section_id === outlineSectionId
-    ) ?? null;
+    return (
+      Object.values(this.data.sections).find(
+        (s: any) => s.paper_id === paperId && s.outline_section_id === outlineSectionId,
+      ) ?? null
+    );
   }
 
   // ── Outline Section CRUD ──
 
   /** 更新大纲中的单个章节 */
-  updateOutlineSection(paperId: string, sectionId: string, updates: { title?: string; coreArgument?: string; estimatedPages?: number; requiredCitations?: number }): void {
+  updateOutlineSection(
+    paperId: string,
+    sectionId: string,
+    updates: { title?: string; coreArgument?: string; estimatedPages?: number; requiredCitations?: number },
+  ): void {
     const outline = this.getPaperOutline(paperId);
     if (!outline) return;
     const idx = outline.sections.findIndex((s: any) => s.id === sectionId);
@@ -285,7 +359,16 @@ export class ScholariumDB {
 
   // ── Citation CRUD (paper-level, with title + url) ──
 
-  createPaperCitation(citation: { id: string; paperId: string; citeKey: string; bibtex: string; title: string; url: string; authors: string; year: number | null }): void {
+  createPaperCitation(citation: {
+    id: string;
+    paperId: string;
+    citeKey: string;
+    bibtex: string;
+    title: string;
+    url: string;
+    authors: string;
+    year: number | null;
+  }): void {
     this.data.citations[citation.id] = {
       id: citation.id,
       paper_id: citation.paperId,
@@ -302,7 +385,10 @@ export class ScholariumDB {
     this.markDirty();
   }
 
-  updatePaperCitation(id: string, updates: { bibtex?: string; title?: string; url?: string; authors?: string; year?: number | null }): void {
+  updatePaperCitation(
+    id: string,
+    updates: { bibtex?: string; title?: string; url?: string; authors?: string; year?: number | null },
+  ): void {
     if (this.data.citations[id]) {
       Object.assign(this.data.citations[id], updates, { updated_at: new Date().toISOString() });
       this.markDirty();
@@ -332,7 +418,9 @@ export class ScholariumDB {
     };
     this.markDirty();
   }
-  getMindMapSession(id: string): any { return this.data.mindmapSessions[id]; }
+  getMindMapSession(id: string): any {
+    return this.data.mindmapSessions[id];
+  }
   listMindMapSessions(): any[] {
     return Object.values(this.data.mindmapSessions);
   }
@@ -391,7 +479,9 @@ export class ScholariumDB {
     };
     this.markDirty();
   }
-  getSocraticSession(id: string): any { return this.data.socraticSessions[id]; }
+  getSocraticSession(id: string): any {
+    return this.data.socraticSessions[id];
+  }
   getSocraticSessionByPaper(paperId: string): any {
     return Object.values(this.data.socraticSessions).find((s: any) => s.paper_id === paperId && s.status === 'active');
   }
@@ -401,7 +491,9 @@ export class ScholariumDB {
       this.markDirty();
     }
   }
-  listSocraticSessions(): any[] { return Object.values(this.data.socraticSessions); }
+  listSocraticSessions(): any[] {
+    return Object.values(this.data.socraticSessions);
+  }
 
   // ── Review Reports ──
   createReviewReport(report: any): void {
@@ -412,7 +504,9 @@ export class ScholariumDB {
     };
     this.markDirty();
   }
-  getReviewReport(id: string): any { return this.data.reviewReports[id]; }
+  getReviewReport(id: string): any {
+    return this.data.reviewReports[id];
+  }
   getReviewReportsByPaper(paperId: string): any[] {
     return Object.values(this.data.reviewReports).filter((r: any) => r.paper_id === paperId);
   }
@@ -430,7 +524,9 @@ export class ScholariumDB {
     this.markDirty();
   }
   getRevisionHistory(paperId: string): any[] {
-    return Object.values(this.data.revisionHistory).filter((r: any) => r.paper_id === paperId).sort((a: any, b: any) => a.round - b.round);
+    return Object.values(this.data.revisionHistory)
+      .filter((r: any) => r.paper_id === paperId)
+      .sort((a: any, b: any) => a.round - b.round);
   }
 
   // ── Material Passports ──
@@ -470,7 +566,9 @@ export class ScholariumDB {
     };
     this.markDirty();
   }
-  getCheckpoint(id: string): any { return this.data.checkpoints[id]; }
+  getCheckpoint(id: string): any {
+    return this.data.checkpoints[id];
+  }
   getActiveCheckpoint(paperId: string): any {
     return Object.values(this.data.checkpoints).find((c: any) => c.paper_id === paperId && !c.confirmed);
   }
@@ -506,10 +604,17 @@ export class ScholariumDB {
   }
 
   /** Force flush pending writes and stop timer */
-  transaction<T>(fn: () => T): T { return fn(); }
-  flush(): void { this.saveSync(); }
+  transaction<T>(fn: () => T): T {
+    return fn();
+  }
+  flush(): void {
+    this.saveSync();
+  }
   close(): void {
-    if (this.flushTimer) { clearInterval(this.flushTimer); this.flushTimer = null; }
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+      this.flushTimer = null;
+    }
     if (this.dirty) this.saveSync();
   }
 }

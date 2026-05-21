@@ -14,7 +14,15 @@ export type { LLMClientConfig, LLMMessage, LLMResponse } from './llm/client.ts';
 export { LLMRouter } from './llm/router.ts';
 
 // Config
-export { createDefaultConfig, DEFAULT_AGENT_MODELS, findConfigFile, getAgentRoute, loadConfig, validateConfig, writeDefaultConfig } from './config/index.ts';
+export {
+  createDefaultConfig,
+  DEFAULT_AGENT_MODELS,
+  findConfigFile,
+  getAgentRoute,
+  loadConfig,
+  validateConfig,
+  writeDefaultConfig,
+} from './config/index.ts';
 export type { ConfigLoadOptions, ConfigValidationResult } from './config/index.ts';
 
 // Agents

@@ -5,7 +5,7 @@ export interface ModelCapabilities {
   supportsStreaming: boolean;
   supportsVision: boolean;
   pricing: {
-    input: number;  // per 1M tokens
+    input: number; // per 1M tokens
     output: number; // per 1M tokens
   };
 }

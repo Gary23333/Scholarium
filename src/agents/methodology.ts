@@ -18,7 +18,10 @@ export class MethodologyAgent extends BaseAgent<MethodologyAgentInput, Methodolo
   readonly name = 'Methodology';
   private router?: LLMRouter;
 
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: MethodologyAgentInput): Promise<MethodologyBlueprint> {
     if (!this.router) return this.mockExecute(input);
@@ -47,9 +50,13 @@ FINER 评分：可行性${researchBrief.finerScore.feasible}/5，新颖性${rese
 
     try {
       const content = await this.router.complete('methodology', systemPrompt, userPrompt, {
-        temperature: 0.2, maxTokens: 1024,
+        temperature: 0.2,
+        maxTokens: 1024,
       });
-      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const cleaned = content
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
       const parsed = JSON.parse(cleaned);
       return { ...parsed, generatedAt: new Date().toISOString() };
     } catch (e) {
@@ -71,14 +78,11 @@ FINER 评分：可行性${researchBrief.finerScore.feasible}/5，新颖性${rese
         '信度：Cronbach α > 0.7',
         '生态效度：研究场景贴近实际',
       ],
-      samplingStrategy: '采用分层随机抽样，确保样本的代表性。定量部分目标样本量 300+，定性部分选取 15-20 名典型个案进行深度访谈。',
-      dataCollectionMethods: [
-        '在线问卷调查（Likert 5 点量表）',
-        '半结构化深度访谈',
-        '文献资料分析',
-        '二手数据收集',
-      ],
-      ethicalConsiderations: '研究将遵循知情同意原则，保护受访者隐私，数据匿名化处理。涉及人类受试者的研究需通过 IRB 审批。',
+      samplingStrategy:
+        '采用分层随机抽样，确保样本的代表性。定量部分目标样本量 300+，定性部分选取 15-20 名典型个案进行深度访谈。',
+      dataCollectionMethods: ['在线问卷调查（Likert 5 点量表）', '半结构化深度访谈', '文献资料分析', '二手数据收集'],
+      ethicalConsiderations:
+        '研究将遵循知情同意原则，保护受访者隐私，数据匿名化处理。涉及人类受试者的研究需通过 IRB 审批。',
       generatedAt: new Date().toISOString(),
     };
   }

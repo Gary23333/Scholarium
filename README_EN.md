@@ -1,10 +1,10 @@
-# 🎓 Scholarium v1.5 — AI-Powered Multi-Agent Academic Paper Writing System
+# 🎓 Scholarium v2.0 — AI-Powered Multi-Agent Academic Paper Writing System
 
 > 23 AI Agents working in concert — from research question to LaTeX paper, fully automated.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
-[![Version](https://img.shields.io/badge/version-1.5.0-green)](package.json)
+[![Version](https://img.shields.io/badge/version-2.0.0-green)](package.json)
 
 **Scholarium** is a multi-agent academic writing engine. Give it a research direction, and 23 specialized AI Agents will guide you through **5-layer Socratic dialogue**, pinpoint your innovation via **3-round mind-map divergence**, generate an outline, write the paper section by section, run it through **18-dimension audits**, **6-dimension AI detection**, and **7-agent peer review**, then output a compilable LaTeX paper.
 
@@ -110,24 +110,48 @@ Research Topic
 ```
 Scholarium/
 ├── src/
+│   ├── server/             # Modular HTTP server
+│   │   ├── context.ts      # Shared server context & types
+│   │   ├── middleware/      # CORS, error handler, logger, body parser
+│   │   ├── routes/         # Modular route handlers
+│   │   │   ├── llm.ts      # LLM config & test routes
+│   │   │   ├── mindmap.ts  # MindMap routes
+│   │   │   ├── papers.ts   # Paper CRUD routes
+│   │   │   ├── sections.ts # Section operation routes
+│   │   │   ├── citations.ts# Citation management routes
+│   │   │   ├── bible.ts    # Bible routes
+│   │   │   ├── review.ts   # Peer review routes
+│   │   │   ├── socratic.ts # Socratic dialogue routes
+│   │   │   ├── integrity.ts# Integrity check routes
+│   │   │   ├── passport.ts # Passport routes
+│   │   │   ├── checkpoint.ts # Checkpoint routes
+│   │   │   ├── tasks.ts    # Task management routes
+│   │   │   ├── stats.ts    # Statistics routes
+│   │   │   ├── health.ts   # Health check routes
+│   │   │   └── static.ts   # Static file serving
+│   │   └── utils/          # Shared utilities
+│   │       ├── helpers.ts  # HTTP helpers (json, error, parseBody)
+│   │       └── latex-to-md.ts # LaTeX conversion
 │   ├── agents/         # 23 AI Agents
 │   ├── anti-ai/        # 6-dim AI detection + rewriting
 │   ├── audit/          # 18-dim quality audit
-│   ├── bible/          # Paper fact Bible (context-selective loading)
-│   ├── embedding/      # Embedding engine (Local/OpenAI/DeepSeek)
-│   ├── figures/        # Mermaid / LaTeX / matplotlib charts
-│   ├── librarian/      # Citation mgmt + external search + rate limiting
+│   ├── bible/          # Paper fact Bible
+│   ├── embedding/      # Embedding engine
+│   ├── figures/        # Chart generation
+│   ├── librarian/      # Citation management
 │   ├── llm/            # LLM Client + Router
-│   ├── mindmap/        # MindMap HTTP/SSE service
-│   ├── models/         # Input governance (7 rules)
-│   ├── pipeline/       # Agent Loop autonomous orchestration
+│   ├── mindmap/        # MindMap service
+│   ├── models/         # Input governance
+│   ├── pipeline/       # Agent orchestration
 │   ├── review/         # 7-agent peer review
 │   ├── types/          # Shared type system
 │   ├── utils/          # Logger + rate limiter
-│   └── server.ts       # Unified API server
-├── frontend/           # React + Vite static workspace
-├── templates/          # 6 journal LaTeX templates
-├── scholarium.config.json  # LLM configuration
+│   ├── __tests__/      # Test suites (vitest)
+│   └── server.ts       # Server entry point (modular orchestrator)
+├── .github/workflows/  # CI/CD (GitHub Actions)
+├── frontend/           # React + Vite workspace
+├── templates/          # Journal LaTeX templates
+├── scholarium.config.json
 └── package.json
 ```
 
@@ -136,9 +160,14 @@ Scholarium/
 ## ⚙️ Commands
 
 ```bash
-npm run serve         # Start dev server (API + frontend)
-npm run typecheck     # TypeScript type check
-npm run test:mock     # Mock tests (no network needed)
+npm run serve          # Start dev server
+npm run typecheck      # TypeScript type check
+npm run test           # Run vitest tests
+npm run test:mock      # Mock tests (no network)
+npm run lint           # ESLint check
+npm run lint:fix       # ESLint auto-fix
+npm run format         # Prettier format
+npm run format:check   # Prettier check
 ```
 
 ---
@@ -157,6 +186,8 @@ npm run test:mock     # Mock tests (no network needed)
 | `POST /api/socratic/start` | Start Socratic dialogue |
 | `POST /api/review/:id/start` | Start peer review |
 | `POST /api/citations/search` | Multi-source literature search |
+| `GET /api/health` | Health status |
+| `GET /api/health/ready` | Readiness probe (DB + LLM check) |
 
 Full API reference: [API Overview](https://github.com/Gary23333/Scholarium#readme)
 
@@ -169,6 +200,25 @@ Full API reference: [API Overview](https://github.com/Gary23333/Scholarium#readm
 - **LLM**: DeepSeek / OpenAI / Anthropic, pluggable providers
 - **Storage**: JSON file persistence, atomic writes
 - **Embedding**: Local TF-IDF / OpenAI text-embedding-3 / DeepSeek Embedding
+- **Testing**: Vitest
+- **Linting**: ESLint 9+ (typescript-eslint)
+- **Formatting**: Prettier
+- **CI/CD**: GitHub Actions
+
+---
+
+## 🆕 v2.0 Changes
+
+| Change | Description |
+|--------|-------------|
+| 🏗️ **Modular server architecture** | server.ts reduced from 2276 → 325 lines, split into independent modules |
+| 🛣️ **14 route modules** | Clean separation of concerns, each route independently maintainable |
+| 🚨 **Unified error handling** | AppError hierarchy with consistent error response format |
+| 💚 **Health check endpoints** | `/api/health` + `/api/health/ready` readiness probes |
+| 🔍 **ESLint + Prettier** | ESLint 9+ (typescript-eslint) + Prettier for consistent code style |
+| 🧪 **Vitest test suite** | 72 test cases covering core logic |
+| ⚙️ **GitHub Actions CI/CD** | Automated build, lint, and test pipeline |
+| 📐 **TypeScript strict mode** | Strict mode enabled with Node.js type definitions |
 
 ---
 

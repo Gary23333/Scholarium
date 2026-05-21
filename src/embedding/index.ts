@@ -17,7 +17,9 @@ export interface EmbeddingProvider {
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0, normA = 0, normB = 0;
+  let dot = 0,
+    normA = 0,
+    normB = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     normA += a[i] * a[i];
@@ -50,7 +52,7 @@ export class LocalEmbeddingProvider implements EmbeddingProvider {
   }
 
   async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
-    return Promise.all(texts.map(t => this.embed(t)));
+    return Promise.all(texts.map((t) => this.embed(t)));
   }
 
   similarity(a: number[], b: number[]): number {
@@ -58,10 +60,11 @@ export class LocalEmbeddingProvider implements EmbeddingProvider {
   }
 
   private tokenize(text: string): string[] {
-    return text.toLowerCase()
+    return text
+      .toLowerCase()
       .replace(/[^a-z\u4e00-\u9fa5\s]/g, '')
       .split(/\s+/)
-      .filter(w => w.length > 0);
+      .filter((w) => w.length > 0);
   }
 
   private tfidfVectorize(words: string[]): number[] {
@@ -83,13 +86,13 @@ export class LocalEmbeddingProvider implements EmbeddingProvider {
 
     // Normalize
     const mag = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
-    return mag === 0 ? vec : vec.map(v => v / mag);
+    return mag === 0 ? vec : vec.map((v) => v / mag);
   }
 
   private hashString(s: string): number {
     let hash = 0;
     for (let i = 0; i < s.length; i++) {
-      hash = ((hash << 5) - hash) + s.charCodeAt(i);
+      hash = (hash << 5) - hash + s.charCodeAt(i);
       hash = hash & hash; // Convert to 32-bit
     }
     return Math.abs(hash);
@@ -123,7 +126,7 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
       },
       body: JSON.stringify({
         input: text.substring(0, 8191), // OpenAI token limit
@@ -136,7 +139,7 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
       throw new Error(`OpenAI embedding failed: ${resp.status} ${error}`);
     }
 
-    const data = await resp.json() as any;
+    const data = (await resp.json()) as any;
     return {
       embedding: data.data?.[0]?.embedding ?? [],
       model: data.model ?? this.config.model,
@@ -149,10 +152,10 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
       },
       body: JSON.stringify({
-        input: texts.map(t => t.substring(0, 8191)),
+        input: texts.map((t) => t.substring(0, 8191)),
         model: this.config.model,
       }),
     });
@@ -162,7 +165,7 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
       throw new Error(`OpenAI embedding batch failed: ${resp.status} ${error}`);
     }
 
-    const data = await resp.json() as any;
+    const data = (await resp.json()) as any;
     return (data.data ?? []).map((d: any, i: number) => ({
       embedding: d.embedding ?? [],
       model: data.model ?? this.config.model,
@@ -202,7 +205,7 @@ export class DeepSeekEmbeddingProvider implements EmbeddingProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
       },
       body: JSON.stringify({
         input: text.substring(0, 8000),
@@ -215,7 +218,7 @@ export class DeepSeekEmbeddingProvider implements EmbeddingProvider {
       throw new Error(`DeepSeek embedding failed: ${resp.status} ${error}`);
     }
 
-    const data = await resp.json() as any;
+    const data = (await resp.json()) as any;
     return {
       embedding: data.data?.[0]?.embedding ?? [],
       model: data.model ?? this.config.model,
@@ -228,10 +231,10 @@ export class DeepSeekEmbeddingProvider implements EmbeddingProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
       },
       body: JSON.stringify({
-        input: texts.map(t => t.substring(0, 8000)),
+        input: texts.map((t) => t.substring(0, 8000)),
         model: this.config.model,
       }),
     });
@@ -241,7 +244,7 @@ export class DeepSeekEmbeddingProvider implements EmbeddingProvider {
       throw new Error(`DeepSeek embedding batch failed: ${resp.status} ${error}`);
     }
 
-    const data = await resp.json() as any;
+    const data = (await resp.json()) as any;
     return (data.data ?? []).map((d: any) => ({
       embedding: d.embedding ?? [],
       model: data.model ?? this.config.model,
@@ -262,7 +265,7 @@ export type EmbeddingProviderType = 'local' | 'openai' | 'deepseek';
 
 export function createEmbeddingProvider(
   type: EmbeddingProviderType,
-  config?: OpenAIConfig | DeepSeekEmbeddingConfig
+  config?: OpenAIConfig | DeepSeekEmbeddingConfig,
 ): EmbeddingProvider {
   switch (type) {
     case 'openai':
@@ -282,24 +285,23 @@ export function createEmbeddingProvider(
 export async function semanticSearch(
   query: string,
   documents: string[],
-  provider: EmbeddingProvider
+  provider: EmbeddingProvider,
 ): Promise<Array<{ index: number; score: number; text: string }>> {
-  const [queryEmb, ...docEmbs] = await Promise.all([
-    provider.embed(query),
-    ...documents.map(d => provider.embed(d)),
-  ]);
+  const [queryEmb, ...docEmbs] = await Promise.all([provider.embed(query), ...documents.map((d) => provider.embed(d))]);
 
-  return documents.map((text, i) => ({
-    index: i,
-    score: provider.similarity(queryEmb.embedding, docEmbs[i].embedding),
-    text,
-  })).sort((a, b) => b.score - a.score);
+  return documents
+    .map((text, i) => ({
+      index: i,
+      score: provider.similarity(queryEmb.embedding, docEmbs[i].embedding),
+      text,
+    }))
+    .sort((a, b) => b.score - a.score);
 }
 
 export async function deduplicateBySemantics(
   items: string[],
   provider: EmbeddingProvider,
-  threshold: number = 0.85
+  threshold: number = 0.85,
 ): Promise<{ unique: string[]; duplicates: Array<{ original: number; duplicate: number; score: number }> }> {
   if (items.length <= 1) return { unique: items, duplicates: [] };
 

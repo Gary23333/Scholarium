@@ -1,8 +1,13 @@
 // Integrity Gate — 5-phase verification for academic integrity
 import type { LLMRouter } from '../llm/router.ts';
 import type {
-  IntegrityGateResult, IntegrityPhaseResult, VerificationResult,
-  FailureModeReport, FailureMode, ClaimAuditResult, ClaimAuditSummary,
+  IntegrityGateResult,
+  IntegrityPhaseResult,
+  VerificationResult,
+  FailureModeReport,
+  FailureMode,
+  ClaimAuditResult,
+  ClaimAuditSummary,
   ClaimAnchor,
 } from '../types/index.ts';
 import { randomUUID } from 'node:crypto';
@@ -43,7 +48,8 @@ export class IntegrityGate {
     // Failure mode detection
     const failureModes = this.checkFailureModes(paperContent, phaseA, phaseB, phaseC, phaseD, phaseE);
 
-    const overallPassed = phaseA.passed && phaseB.passed && phaseC.passed && phaseD.passed && phaseE.passed && !failureModes.blocked;
+    const overallPassed =
+      phaseA.passed && phaseB.passed && phaseC.passed && phaseD.passed && phaseE.passed && !failureModes.blocked;
 
     const criticalIssues: string[] = [];
     const warnings: string[] = [];
@@ -84,19 +90,26 @@ export class IntegrityGate {
     const citeRegex = /\\cite\{([^}]+)\}/g;
     let match;
     while ((match = citeRegex.exec(content)) !== null) {
-      for (const k of match[1].split(',').map(s => s.trim())) citeKeys.add(k);
+      for (const k of match[1].split(',').map((s) => s.trim())) citeKeys.add(k);
     }
 
-    const refKeys = new Set(refs.map(r => r.key));
+    const refKeys = new Set(refs.map((r) => r.key));
     for (const key of citeKeys) {
       if (refKeys.has(key)) {
         checks.push({ target: key, verdict: 'verified', details: `引用 ${key} 存在于参考文献库中`, confidence: 1.0 });
       } else {
-        checks.push({ target: key, verdict: 'not_found', details: `引用 ${key} 未在参考文献库中找到`, confidence: 0.9 });
+        checks.push({
+          target: key,
+          verdict: 'not_found',
+          details: `引用 ${key} 未在参考文献库中找到`,
+          confidence: 0.9,
+        });
       }
     }
 
-    const criticalCount = checks.filter(c => c.verdict === 'not_found' || c.verdict === 'suspected_fabrication').length;
+    const criticalCount = checks.filter(
+      (c) => c.verdict === 'not_found' || c.verdict === 'suspected_fabrication',
+    ).length;
     return { phase: 'A', checks, passed: criticalCount === 0, criticalCount, warningCount: 0 };
   }
 
@@ -123,7 +136,7 @@ export class IntegrityGate {
       }
     }
 
-    const warningCount = checks.filter(c => c.verdict === 'mismatch').length;
+    const warningCount = checks.filter((c) => c.verdict === 'mismatch').length;
     return { phase: 'B', checks, passed: warningCount === 0, criticalCount: 0, warningCount };
   }
 
@@ -166,7 +179,8 @@ export class IntegrityGate {
 
   private verifyClaims(content: string, refs: Array<{ key: string }>): IntegrityPhaseResult {
     const checks: VerificationResult[] = [];
-    const claimPattern = /(我们的方法达到了|our method achieves|实验结果表明|experimental results show|我们取得了|we achieve|性能提升|performance improvement)/gi;
+    const claimPattern =
+      /(我们的方法达到了|our method achieves|实验结果表明|experimental results show|我们取得了|we achieve|性能提升|performance improvement)/gi;
     let match;
     while ((match = claimPattern.exec(content)) !== null) {
       const span = content.substring(Math.max(0, match.index - 50), match.index + match[0].length + 50);
@@ -182,7 +196,7 @@ export class IntegrityGate {
       }
     }
 
-    const criticalCount = checks.filter(c => c.verdict === 'not_found').length;
+    const criticalCount = checks.filter((c) => c.verdict === 'not_found').length;
     return { phase: 'E', checks, passed: criticalCount === 0, criticalCount, warningCount: 0 };
   }
 
@@ -227,7 +241,7 @@ export class IntegrityGate {
       const contextEnd = Math.min(content.length, match.index + match[0].length + 50);
       const context = content.substring(contextStart, contextEnd).trim();
 
-      const ref = refs.find(r => r.key === key);
+      const ref = refs.find((r) => r.key === key);
       const anchor: ClaimAnchor = { kind: 'none', value: '' };
 
       results.push({
@@ -242,10 +256,10 @@ export class IntegrityGate {
 
     return {
       totalChecked: results.length,
-      supported: results.filter(r => r.verdict === 'supported').length,
-      notSupported: results.filter(r => r.verdict === 'not_supported').length,
-      anchorless: results.filter(r => r.verdict === 'anchorless').length,
-      constraintViolations: results.filter(r => r.verdict === 'negative_constraint_violation').length,
+      supported: results.filter((r) => r.verdict === 'supported').length,
+      notSupported: results.filter((r) => r.verdict === 'not_supported').length,
+      anchorless: results.filter((r) => r.verdict === 'anchorless').length,
+      constraintViolations: results.filter((r) => r.verdict === 'negative_constraint_violation').length,
       results,
     };
   }

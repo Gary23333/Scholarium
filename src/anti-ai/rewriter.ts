@@ -1,5 +1,11 @@
 // Anti-AI Rewriter — rule-based + LLM rewrite
-import type { RewriterInput, RewriteResult, RewriteDiffReport, TextChange, ProtectedSpanForRewrite } from '../types/index.ts';
+import type {
+  RewriterInput,
+  RewriteResult,
+  RewriteDiffReport,
+  TextChange,
+  ProtectedSpanForRewrite,
+} from '../types/index.ts';
 import { detect } from './detector.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.js';
@@ -35,7 +41,7 @@ export async function rewrite(input: RewriterInput, router?: LLMRouter): Promise
   }
 
   let text = input.text;
-  const protectedRanges = input.protectedSpans.map(s => ({ start: s.start, end: s.end }));
+  const protectedRanges = input.protectedSpans.map((s) => ({ start: s.start, end: s.end }));
   const changes: TextChange[] = [];
 
   for (const rule of REPLACEMENTS) {
@@ -46,7 +52,13 @@ export async function rewrite(input: RewriterInput, router?: LLMRouter): Promise
       const before = text.slice(0, m.index);
       const after = text.slice(m.index + m[0].length);
       text = before + rule.replacement + after;
-      changes.push({ type: 'modified', start: m.index, end: m.index + rule.replacement.length, oldText: m[0], newText: rule.replacement });
+      changes.push({
+        type: 'modified',
+        start: m.index,
+        end: m.index + rule.replacement.length,
+        oldText: m[0],
+        newText: rule.replacement,
+      });
       regex.lastIndex = m.index + rule.replacement.length;
     }
   }
@@ -65,7 +77,7 @@ export async function rewrite(input: RewriterInput, router?: LLMRouter): Promise
 }
 
 async function llmRewrite(input: RewriterInput, router: LLMRouter): Promise<RewriteResult> {
-  const protectedTexts = input.protectedSpans.map(s => s.text);
+  const protectedTexts = input.protectedSpans.map((s) => s.text);
   const systemPrompt = `You are an academic writing style improver. Rewrite the given text to reduce AI-generated patterns while preserving:
 - ALL citations (\\\\cite{...}) exactly as-is
 - ALL equations and formulas
@@ -87,18 +99,27 @@ Text to rewrite:
 ${input.text.substring(0, 6000)}
 
 Rewrite this text to reduce AI patterns while preserving all protected content and meaning.`;
-  const content = await router.complete('anti-ai', systemPrompt, userPrompt, { temperature: 0.3, maxTokens: 16384, timeout: 120000 });
-  const cleaned = content.replace(/^```(?:latex)?\n?/i, '').replace(/```\n?$/i, '').trim();
+  const content = await router.complete('anti-ai', systemPrompt, userPrompt, {
+    temperature: 0.3,
+    maxTokens: 16384,
+    timeout: 120000,
+  });
+  const cleaned = content
+    .replace(/^```(?:latex)?\n?/i, '')
+    .replace(/```\n?$/i, '')
+    .trim();
   const postScore = await detect(cleaned, { mockMode: false }, router);
   const changeRatio = Math.abs(cleaned.length - input.text.length) / Math.max(input.text.length, 1);
   return {
     rewrittenText: cleaned,
     diff: { textChangeRatio: changeRatio, protectedContentChanged: false, changes: [], protectedChanges: [] },
-    round: 1, postScore, passed: postScore.overall <= 0.5,
+    round: 1,
+    postScore,
+    passed: postScore.overall <= 0.5,
   };
 }
 
 function isInProtected(start: number, length: number, ranges: Array<{ start: number; end: number }>): boolean {
   const end = start + length;
-  return ranges.some(r => start < r.end && end > r.start);
+  return ranges.some((r) => start < r.end && end > r.start);
 }

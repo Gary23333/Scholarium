@@ -1,8 +1,18 @@
 // Task Manager — 跟踪所有 LLM 生成任务的状态
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'timeout' | 'cancelled';
-export type TaskType = 'plan' | 'write' | 'audit' | 'translate' | 'generate-template' | 'from-url' | 'diverge' | 'rewrite' | 'optimize-related' | 'other';
+export type TaskType =
+  | 'plan'
+  | 'write'
+  | 'audit'
+  | 'translate'
+  | 'generate-template'
+  | 'from-url'
+  | 'diverge'
+  | 'rewrite'
+  | 'optimize-related'
+  | 'other';
 
 export interface TaskPhase {
   name: string;
@@ -65,7 +75,7 @@ export class TaskManager {
   updatePhase(taskId: string, name: string, updates: Partial<TaskPhase>): void {
     const task = this.tasks.get(taskId);
     if (!task?.phases) return;
-    const idx = task.phases.findIndex(p => p.name === name);
+    const idx = task.phases.findIndex((p) => p.name === name);
     if (idx !== -1) Object.assign(task.phases[idx], updates);
   }
 
@@ -80,7 +90,7 @@ export class TaskManager {
           p.status = p.name === currentPhase ? 'running' : p.status === 'pending' ? 'pending' : p.status;
           if (p.name === currentPhase) p.status = 'running';
         }
-        const idx = task.phases.findIndex(p => p.name === currentPhase);
+        const idx = task.phases.findIndex((p) => p.name === currentPhase);
         if (idx > 0) {
           for (let i = 0; i < idx; i++) {
             if (task.phases[i].status === 'running' || task.phases[i].status === 'pending')
@@ -98,7 +108,7 @@ export class TaskManager {
       task.status = 'completed';
       task.progress = 100;
       task.completedAt = new Date();
-      task.duration = task.startedAt 
+      task.duration = task.startedAt
         ? task.completedAt.getTime() - task.startedAt.getTime()
         : task.completedAt.getTime() - task.createdAt.getTime();
       if (message) task.message = message;
@@ -116,7 +126,7 @@ export class TaskManager {
     if (task) {
       task.status = 'failed';
       task.completedAt = new Date();
-      task.duration = task.startedAt 
+      task.duration = task.startedAt
         ? task.completedAt.getTime() - task.startedAt.getTime()
         : task.completedAt.getTime() - task.createdAt.getTime();
       task.error = error;
@@ -134,7 +144,7 @@ export class TaskManager {
     if (task) {
       task.status = 'timeout';
       task.completedAt = new Date();
-      task.duration = task.startedAt 
+      task.duration = task.startedAt
         ? task.completedAt.getTime() - task.startedAt.getTime()
         : task.completedAt.getTime() - task.createdAt.getTime();
       task.error = 'Task timed out';
@@ -152,7 +162,7 @@ export class TaskManager {
     if (task && task.status !== 'completed') {
       task.status = 'cancelled';
       task.completedAt = new Date();
-      task.duration = task.startedAt 
+      task.duration = task.startedAt
         ? task.completedAt.getTime() - task.startedAt.getTime()
         : task.completedAt.getTime() - task.createdAt.getTime();
     }
@@ -164,34 +174,32 @@ export class TaskManager {
   }
 
   /** 获取所有任务 */
-  getAll(options?: { 
-    status?: TaskStatus; 
-    type?: TaskType; 
-    limit?: number;
-    offset?: number;
-  }): { tasks: Task[]; total: number } {
+  getAll(options?: { status?: TaskStatus; type?: TaskType; limit?: number; offset?: number }): {
+    tasks: Task[];
+    total: number;
+  } {
     let tasks = Array.from(this.tasks.values());
-    
+
     // 按状态筛选
     if (options?.status) {
-      tasks = tasks.filter(t => t.status === options.status);
+      tasks = tasks.filter((t) => t.status === options.status);
     }
-    
+
     // 按类型筛选
     if (options?.type) {
-      tasks = tasks.filter(t => t.type === options.type);
+      tasks = tasks.filter((t) => t.type === options.type);
     }
-    
+
     // 按创建时间倒序排序
     tasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    
+
     const total = tasks.length;
-    
+
     // 分页
     const offset = options?.offset ?? 0;
     const limit = options?.limit ?? 50;
     tasks = tasks.slice(offset, offset + limit);
-    
+
     return { tasks, total };
   }
 
@@ -208,12 +216,12 @@ export class TaskManager {
     const tasks = Array.from(this.tasks.values());
     return {
       total: tasks.length,
-      pending: tasks.filter(t => t.status === 'pending').length,
-      running: tasks.filter(t => t.status === 'running').length,
-      completed: tasks.filter(t => t.status === 'completed').length,
-      failed: tasks.filter(t => t.status === 'failed').length,
-      timeout: tasks.filter(t => t.status === 'timeout').length,
-      cancelled: tasks.filter(t => t.status === 'cancelled').length,
+      pending: tasks.filter((t) => t.status === 'pending').length,
+      running: tasks.filter((t) => t.status === 'running').length,
+      completed: tasks.filter((t) => t.status === 'completed').length,
+      failed: tasks.filter((t) => t.status === 'failed').length,
+      timeout: tasks.filter((t) => t.status === 'timeout').length,
+      cancelled: tasks.filter((t) => t.status === 'cancelled').length,
     };
   }
 

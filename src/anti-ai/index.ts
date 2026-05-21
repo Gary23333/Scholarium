@@ -34,11 +34,25 @@ export function extractProtectedSpans(text: string): ProtectedSpanForRewrite[] {
   const citeRegex = /\\cite\{([^}]+)\}/g;
   let m;
   while ((m = citeRegex.exec(text)) !== null) {
-    spans.push({ id: `cite-${++id}`, type: 'citation', start: m.index, end: m.index + m[0].length, text: m[0], normalizedKey: m[1] });
+    spans.push({
+      id: `cite-${++id}`,
+      type: 'citation',
+      start: m.index,
+      end: m.index + m[0].length,
+      text: m[0],
+      normalizedKey: m[1],
+    });
   }
   const eqRegex = /\\begin\{equation\}[\s\S]*?\\end\{equation\}/g;
   while ((m = eqRegex.exec(text)) !== null) {
-    spans.push({ id: `eq-${++id}`, type: 'formula', start: m.index, end: m.index + m[0].length, text: m[0], normalizedKey: m[0].replace(/\s+/g, ' ').trim() });
+    spans.push({
+      id: `eq-${++id}`,
+      type: 'formula',
+      start: m.index,
+      end: m.index + m[0].length,
+      text: m[0],
+      normalizedKey: m[0].replace(/\s+/g, ' ').trim(),
+    });
   }
   return spans;
 }

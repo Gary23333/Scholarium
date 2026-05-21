@@ -38,7 +38,10 @@ export interface CartographerOutput {
 export class CartographerAgent extends BaseAgent<CartographerInput, CartographerOutput> {
   readonly name = 'Cartographer';
   private router?: LLMRouter;
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: CartographerInput): Promise<CartographerOutput> {
     if (!this.router) return this.mockExecute(input);
@@ -68,25 +71,19 @@ ${keywords?.length ? `Keywords: ${keywords.join(', ')}` : ''}
 ${targetJournal ? `Target journal: ${targetJournal}` : ''}
 
 Generate 5-8 major research branches (one level deep) for this topic.`;
-
     } else if (currentRound === 2) {
-      const selectedLabels = existingNodes
-        ?.filter(n => selectedNodeIds?.includes(n.id))
-        .map(n => n.label) ?? [];
+      const selectedLabels = existingNodes?.filter((n) => selectedNodeIds?.includes(n.id)).map((n) => n.label) ?? [];
 
       systemPrompt = `You are an academic research topic explorer. For each selected branch, generate 3-5 sub-topics.
 Output ONLY valid JSON: {"branchName": [{"label": "string"}], ...}`;
       userPrompt = `Research topic: ${researchTopic}
 Selected branches to deepen:
-${selectedLabels.map(l => `- ${l}`).join('\n')}
+${selectedLabels.map((l) => `- ${l}`).join('\n')}
 
 For each branch, generate 3-5 specific sub-topics or research questions.`;
-
     } else {
       // Round 3: Contribution positioning
-      const allLabels = existingNodes
-        ?.filter(n => n.round <= 2)
-        .map(n => `- ${n.label}`) ?? [];
+      const allLabels = existingNodes?.filter((n) => n.round <= 2).map((n) => `- ${n.label}`) ?? [];
 
       systemPrompt = `You are an academic research advisor. Identify research gaps and novelty opportunities.
 Output ONLY valid JSON: {"gaps": ["string"], "noveltyCandidates": ["string"]}`;
@@ -98,7 +95,10 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     }
 
     const response = await this.router!.complete('cartographer', systemPrompt, userPrompt, { temperature: 0.7 });
-    const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const cleaned = response
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
 
     try {
       const parsed = JSON.parse(cleaned);
@@ -128,13 +128,12 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
         source: 'ai' as const,
       }));
       summary = `Round 1: Generated ${nodes.length} top-level branches`;
-
     } else if (round === 2) {
       // parsed is { branchName: [{label}], ... }
       let idx = 0;
       for (const [parentLabel, children] of Object.entries(parsed)) {
         if (!Array.isArray(children)) continue;
-        const parent = existingNodes?.find(n => n.label === parentLabel && selectedNodeIds?.includes(n.id));
+        const parent = existingNodes?.find((n) => n.label === parentLabel && selectedNodeIds?.includes(n.id));
         if (!parent) continue;
         for (const child of children) {
           nodes.push({
@@ -149,18 +148,27 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
         }
       }
       summary = `Round 2: Generated ${nodes.length} sub-topics`;
-
     } else {
       const gaps: string[] = parsed.gaps ?? [];
       const novelty: string[] = parsed.noveltyCandidates ?? [];
       nodes = [
         ...gaps.map((g, i) => ({
-          id: `r3-gap-${i}`, label: `[Gap] ${g}`, parentId: null, round: 3,
-          checked: false, journalMatch: 'match' as const, source: 'ai' as const,
+          id: `r3-gap-${i}`,
+          label: `[Gap] ${g}`,
+          parentId: null,
+          round: 3,
+          checked: false,
+          journalMatch: 'match' as const,
+          source: 'ai' as const,
         })),
         ...novelty.map((n, i) => ({
-          id: `r3-nov-${i}`, label: `[Novelty] ${n}`, parentId: null, round: 3,
-          checked: false, journalMatch: 'match' as const, source: 'ai' as const,
+          id: `r3-nov-${i}`,
+          label: `[Novelty] ${n}`,
+          parentId: null,
+          round: 3,
+          checked: false,
+          journalMatch: 'match' as const,
+          source: 'ai' as const,
         })),
       ];
       summary = `Round 3: Identified ${gaps.length} gaps, ${novelty.length} novelty candidates`;
@@ -180,8 +188,13 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     if (currentRound === 1) {
       const branches = this.getMockBranches(topic);
       const nodes: MindMapNode[] = branches.map((label, i) => ({
-        id: `r1-${i}`, label, parentId: null, round: 1,
-        checked: false, journalMatch: 'partial' as const, source: 'ai' as const,
+        id: `r1-${i}`,
+        label,
+        parentId: null,
+        round: 1,
+        checked: false,
+        journalMatch: 'partial' as const,
+        source: 'ai' as const,
       }));
       return { nodes, round: 1, summary: `Round 1: ${nodes.length} branches for "${researchTopic}"` };
     }
@@ -189,13 +202,18 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     if (currentRound === 2) {
       const nodes: MindMapNode[] = [];
       let idx = 0;
-      const selected = existingNodes?.filter(n => selectedNodeIds?.includes(n.id)) ?? [];
+      const selected = existingNodes?.filter((n) => selectedNodeIds?.includes(n.id)) ?? [];
       for (const parent of selected) {
         const subs = this.getMockSubTopics(parent.label, topic);
         for (const sub of subs) {
           nodes.push({
-            id: `r2-${idx++}`, label: sub, parentId: parent.id, round: 2,
-            checked: false, journalMatch: 'partial' as const, source: 'ai' as const,
+            id: `r2-${idx++}`,
+            label: sub,
+            parentId: parent.id,
+            round: 2,
+            checked: false,
+            journalMatch: 'partial' as const,
+            source: 'ai' as const,
           });
         }
       }
@@ -206,8 +224,24 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     const gaps = this.getMockGaps(topic);
     const novelty = this.getMockNovelty(topic);
     const nodes: MindMapNode[] = [
-      ...gaps.map((g, i) => ({ id: `r3-gap-${i}`, label: `[Gap] ${g}`, parentId: null, round: 3, checked: false, journalMatch: 'match' as const, source: 'ai' as const })),
-      ...novelty.map((n, i) => ({ id: `r3-nov-${i}`, label: `[Novelty] ${n}`, parentId: null, round: 3, checked: false, journalMatch: 'match' as const, source: 'ai' as const })),
+      ...gaps.map((g, i) => ({
+        id: `r3-gap-${i}`,
+        label: `[Gap] ${g}`,
+        parentId: null,
+        round: 3,
+        checked: false,
+        journalMatch: 'match' as const,
+        source: 'ai' as const,
+      })),
+      ...novelty.map((n, i) => ({
+        id: `r3-nov-${i}`,
+        label: `[Novelty] ${n}`,
+        parentId: null,
+        round: 3,
+        checked: false,
+        journalMatch: 'match' as const,
+        source: 'ai' as const,
+      })),
     ];
     return { nodes, round: 3, summary: `Round 3: ${gaps.length} gaps, ${novelty.length} novelty candidates` };
   }
@@ -282,12 +316,14 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
         'Evaluation of long-range dependencies',
       ],
     };
-    return map[parentLabel] ?? [
-      `${parentLabel}: fundamental concepts`,
-      `${parentLabel}: recent advances`,
-      `${parentLabel}: open challenges`,
-      `${parentLabel}: practical applications`,
-    ];
+    return (
+      map[parentLabel] ?? [
+        `${parentLabel}: fundamental concepts`,
+        `${parentLabel}: recent advances`,
+        `${parentLabel}: open challenges`,
+        `${parentLabel}: practical applications`,
+      ]
+    );
   }
 
   private getMockGaps(topic: string): string[] {

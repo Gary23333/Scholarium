@@ -50,5 +50,9 @@ export function applyTemplateVariables(template: string, vars: Record<string, st
   return result;
 }
 
-export function getBuiltinTemplates(): LatexTemplate[] { return [defaultTemplate]; }
-export function getTemplate(id: string): LatexTemplate | undefined { return getBuiltinTemplates().find(t => t.id === id); }
+export function getBuiltinTemplates(): LatexTemplate[] {
+  return [defaultTemplate];
+}
+export function getTemplate(id: string): LatexTemplate | undefined {
+  return getBuiltinTemplates().find((t) => t.id === id);
+}

@@ -2,7 +2,7 @@
 // All use fetch API, no external dependencies
 
 import type { LiteratureSearchResult } from '../types/index.ts';
-import { rateLimiter } from '../utils/rate-limiter.js';
+import { rateLimiter } from '../utils/rate-limiter.ts';
 
 export interface SearchOptions {
   maxResults?: number;
@@ -32,8 +32,8 @@ export async function searchSemanticScholar(query: string, options: SearchOption
     });
     const resp = await rateLimiter.fetchWithRetry(
       `https://api.semanticscholar.org/graph/v1/paper/search?${params}`,
-      { headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(60000) },
-      'api.semanticscholar.org'
+      { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(60000) },
+      'api.semanticscholar.org',
     );
 
     if (!resp.ok) {
@@ -41,8 +41,8 @@ export async function searchSemanticScholar(query: string, options: SearchOption
       return { results, errors };
     }
 
-    const data = await resp.json() as any;
-    for (const paper of (data.data ?? [])) {
+    const data = (await resp.json()) as any;
+    for (const paper of data.data ?? []) {
       results.push({
         source: 'semantic_scholar',
         title: paper.title ?? '',
@@ -81,7 +81,7 @@ export async function searchArxiv(query: string, options: SearchOptions = {}): P
     const resp = await rateLimiter.fetchWithRetry(
       `http://export.arxiv.org/api/query?${params}`,
       { signal: AbortSignal.timeout(60000) },
-      'export.arxiv.org'
+      'export.arxiv.org',
     );
 
     if (!resp.ok) {
@@ -99,7 +99,7 @@ export async function searchArxiv(query: string, options: SearchOptions = {}): P
       const abstract = extractXMLField(entry, 'summary')?.replace(/\s+/g, ' ').trim() ?? '';
       const published = extractXMLField(entry, 'published')?.substring(0, 4) ?? '';
       const arxivId = extractXMLField(entry, 'id')?.match(/abs\/(.+)$/)?.[1] ?? '';
-      const authors = [...entry.matchAll(/<name>([^<]+)<\/name>/g)].map(m => m[1]);
+      const authors = [...entry.matchAll(/<name>([^<]+)<\/name>/g)].map((m) => m[1]);
 
       results.push({
         source: 'arxiv',
@@ -138,8 +138,11 @@ export async function searchCrossRef(query: string, options: SearchOptions = {})
     });
     const resp = await rateLimiter.fetchWithRetry(
       `https://api.crossref.org/works?${params}`,
-      { headers: { 'User-Agent': 'Scholarium/1.0 (mailto:scholarium@example.com)' }, signal: AbortSignal.timeout(60000) },
-      'api.crossref.org'
+      {
+        headers: { 'User-Agent': 'Scholarium/1.0 (mailto:scholarium@example.com)' },
+        signal: AbortSignal.timeout(60000),
+      },
+      'api.crossref.org',
     );
 
     if (!resp.ok) {
@@ -147,8 +150,8 @@ export async function searchCrossRef(query: string, options: SearchOptions = {})
       return { results, errors };
     }
 
-    const data = await resp.json() as any;
-    for (const item of (data.message?.items ?? [])) {
+    const data = (await resp.json()) as any;
+    for (const item of data.message?.items ?? []) {
       const year = item['published-print']?.['date-parts']?.[0]?.[0] ?? null;
       results.push({
         source: 'crossref',
@@ -198,7 +201,10 @@ export async function searchAllSources(query: string, options: SearchOptions = {
   const deduped: LiteratureSearchResult[] = [];
   for (const r of allResults) {
     const key = r.doi ?? r.title.toLowerCase();
-    if (!seen.has(key)) { seen.add(key); deduped.push(r); }
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(r);
+    }
   }
 
   // Sort by confidence

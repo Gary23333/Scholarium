@@ -19,7 +19,8 @@ export class LLMRouter {
   private providerConfigs: Map<string, { apiKey?: string; baseUrl?: string }> = new Map();
 
   private config?: ScholariumConfig;
-  constructor(config?: ScholariumConfig) { this.config = config;
+  constructor(config?: ScholariumConfig) {
+    this.config = config;
     if (config) this.initFromConfig(config);
   }
 
@@ -37,7 +38,11 @@ export class LLMRouter {
     }
     // Model assignments
     for (const [agent, route] of Object.entries(config.llm.models)) {
-      this.modelConfigs.set(this.normalizeAgentName(agent), { model: route.model, temperature: route.temperature, taskType: route.taskType });
+      this.modelConfigs.set(this.normalizeAgentName(agent), {
+        model: route.model,
+        temperature: route.temperature,
+        taskType: route.taskType,
+      });
     }
     // Fallbacks
     for (const [agent, fb] of Object.entries(config.llm.fallbacks)) {
@@ -78,7 +83,9 @@ export class LLMRouter {
       }
     }
     if (!client) {
-      throw new Error(`No LLM client registered for provider: ${provider}. Configure llm.providers.${provider}.apiKey and baseUrl.`);
+      throw new Error(
+        `No LLM client registered for provider: ${provider}. Configure llm.providers.${provider}.apiKey and baseUrl.`,
+      );
     }
     const model = mc?.model ?? 'deepseek-chat';
     const taskType = mc?.taskType ?? 'factual';
@@ -92,7 +99,11 @@ export class LLMRouter {
   }
 
   /** Chat using agent routing */
-  async chat(agentName: string, messages: LLMMessage[], overrides?: { temperature?: number; model?: string; maxTokens?: number; timeout?: number }): Promise<LLMResponse> {
+  async chat(
+    agentName: string,
+    messages: LLMMessage[],
+    overrides?: { temperature?: number; model?: string; maxTokens?: number; timeout?: number },
+  ): Promise<LLMResponse> {
     const agentKey = this.normalizeAgentName(agentName);
     const { client, model, temperature, maxTokens } = this.getClient(agentKey);
     try {
@@ -112,7 +123,11 @@ export class LLMRouter {
             let fbClient = this.clients.get(fbProvider);
             const providerConfig = this.providerConfigs.get(fbProvider);
             if (!fbClient && providerConfig?.apiKey && providerConfig.baseUrl) {
-              this.registerProvider(fbProvider, { apiKey: providerConfig.apiKey, baseUrl: providerConfig.baseUrl, model: fbModel });
+              this.registerProvider(fbProvider, {
+                apiKey: providerConfig.apiKey,
+                baseUrl: providerConfig.baseUrl,
+                model: fbModel,
+              });
               fbClient = this.clients.get(fbProvider);
             }
             if (fbClient) {
@@ -120,7 +135,9 @@ export class LLMRouter {
               const resp = await fbClient.chat(messages, { model: fbModel, temperature, maxTokens: fbMaxTokens });
               return { ...resp, model: fbModel };
             }
-          } catch { logger.warn('LLM fallback client failed, continuing to next fallback'); /* continue to next fallback */ }
+          } catch {
+            logger.warn('LLM fallback client failed, continuing to next fallback'); /* continue to next fallback */
+          }
         }
       }
       throw err;
@@ -128,7 +145,12 @@ export class LLMRouter {
   }
 
   /** Complete using agent routing */
-  async complete(agentName: string, systemPrompt: string, userPrompt: string, overrides?: { temperature?: number; model?: string; maxTokens?: number; timeout?: number }): Promise<string> {
+  async complete(
+    agentName: string,
+    systemPrompt: string,
+    userPrompt: string,
+    overrides?: { temperature?: number; model?: string; maxTokens?: number; timeout?: number },
+  ): Promise<string> {
     const messages: LLMMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -161,6 +183,9 @@ export class LLMRouter {
   }
 
   private normalizeAgentName(agentName: string): string {
-    return agentName.trim().replace(/[-_\s]+([a-z])/g, (_, c) => c.toUpperCase()).replace(/^([A-Z])/, c => c.toLowerCase());
+    return agentName
+      .trim()
+      .replace(/[-_\s]+([a-z])/g, (_, c) => c.toUpperCase())
+      .replace(/^([A-Z])/, (c) => c.toLowerCase());
   }
 }

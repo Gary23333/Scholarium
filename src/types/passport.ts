@@ -33,12 +33,12 @@ export interface MaterialPassport {
 }
 
 export interface CollaborationQuality {
-  directionSetting: number;        // 1-100 方向设定
+  directionSetting: number; // 1-100 方向设定
   intellectualContribution: number; // 1-100 知识贡献
-  qualityGatekeeping: number;       // 1-100 质量把关
-  iterationDiscipline: number;      // 1-100 迭代纪律
-  delegationEfficiency: number;     // 1-100 委托效率
-  metaLearning: number;             // 1-100 元学习
+  qualityGatekeeping: number; // 1-100 质量把关
+  iterationDiscipline: number; // 1-100 迭代纪律
+  delegationEfficiency: number; // 1-100 委托效率
+  metaLearning: number; // 1-100 元学习
 }
 
 export interface AISelfReflection {

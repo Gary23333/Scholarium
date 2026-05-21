@@ -4,8 +4,13 @@ import type { ResearchQuestionAgent } from '../agents/research-question.ts';
 import type { MethodologyAgent } from '../agents/methodology.ts';
 import type { ScholariumDB } from '../db/database.ts';
 import type {
-  SocraticSession, SocraticTurn, SocraticLayer, SocraticMode,
-  DialogueHealth, ResearchBrief, MethodologyBlueprint,
+  SocraticSession,
+  SocraticTurn,
+  SocraticLayer,
+  SocraticMode,
+  DialogueHealth,
+  ResearchBrief,
+  MethodologyBlueprint,
 } from '../types/index.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -315,8 +320,8 @@ export class SocraticOrchestrator {
   }
 
   private shouldTriggerCommitmentGate(session: SocraticSession): boolean {
-    const layerTurns = session.turns.filter(t => t.layer === session.currentLayer && t.role === 'user');
-    const hasInsight = session.turns.some(t => t.layer === session.currentLayer && t.tags.includes('insight'));
+    const layerTurns = session.turns.filter((t) => t.layer === session.currentLayer && t.role === 'user');
+    const hasInsight = session.turns.some((t) => t.layer === session.currentLayer && t.tags.includes('insight'));
     return layerTurns.length >= 2 && hasInsight && session.turnCount % 4 === 0;
   }
 

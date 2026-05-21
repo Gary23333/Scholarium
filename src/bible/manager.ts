@@ -18,7 +18,9 @@ export interface BibleEntryInput {
 
 export class BibleManager {
   private db: ScholariumDB;
-  constructor(db: ScholariumDB) { this.db = db; }
+  constructor(db: ScholariumDB) {
+    this.db = db;
+  }
 
   addEntry(input: BibleEntryInput): string {
     const id = randomUUID();
@@ -31,7 +33,9 @@ export class BibleManager {
       value: input.value,
       sourceSectionId: input.sourceSectionId,
       sourceType: input.sourceType ?? 'agent',
-      sourceArtifactVersion: existing ? (existing.source_artifact_version ?? 1) + 1 : (input.sourceArtifactVersion ?? 1),
+      sourceArtifactVersion: existing
+        ? (existing.source_artifact_version ?? 1) + 1
+        : (input.sourceArtifactVersion ?? 1),
       confidence: input.confidence ?? 1.0,
       approvalStatus: input.approvalStatus ?? 'approved',
       supersedesEntryId: existing?.id ?? input.supersedesEntryId,
@@ -122,7 +126,7 @@ export class BibleManager {
     ]);
 
     // Score each entry by relevance
-    const scored = allEntries.map(entry => {
+    const scored = allEntries.map((entry) => {
       let score = 0;
       const val = entry.value.toLowerCase();
       const key = entry.key.toLowerCase();
@@ -146,15 +150,16 @@ export class BibleManager {
     });
 
     // Take top-N entries per category, always keep all immutable
-    const immutable = scored.filter(s => s.entry.immutable).map(s => s.entry);
-    const mutable = scored.filter(s => !s.entry.immutable)
+    const immutable = scored.filter((s) => s.entry.immutable).map((s) => s.entry);
+    const mutable = scored
+      .filter((s) => !s.entry.immutable)
       .sort((a, b) => b.score - a.score)
       .slice(0, 30)
-      .map(s => s.entry);
+      .map((s) => s.entry);
 
     // Merge and deduplicate by key
     const seen = new Set<string>();
-    return [...immutable, ...mutable].filter(e => {
+    return [...immutable, ...mutable].filter((e) => {
       const composite = `${e.category}:${e.key}`;
       if (seen.has(composite)) return false;
       seen.add(composite);

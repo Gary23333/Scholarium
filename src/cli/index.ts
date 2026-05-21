@@ -11,7 +11,9 @@ import { logger } from '../utils/logger.js';
 const program = new Command();
 program.name('scholarium').description('Scholarium — Multi-Agent Academic Paper Writing System').version('0.1.0');
 
-program.command('init').description('Initialize new paper project')
+program
+  .command('init')
+  .description('Initialize new paper project')
   .requiredOption('-d, --dir <path>', 'Project directory')
   .requiredOption('-t, --title <title>', 'Paper title')
   .option('-a, --author <authors...>', 'Authors', ['Anonymous'])
@@ -19,12 +21,23 @@ program.command('init').description('Initialize new paper project')
   .option('-j, --journal <name>', 'Target journal')
   .action((opts) => {
     try {
-      const project = createLatexProject({ rootDir: opts.dir, title: opts.title, authors: opts.author, templateId: opts.template, targetJournal: opts.journal });
+      const project = createLatexProject({
+        rootDir: opts.dir,
+        title: opts.title,
+        authors: opts.author,
+        templateId: opts.template,
+        targetJournal: opts.journal,
+      });
       logger.info(`✅ Project initialized: ${project.rootDir}`);
-    } catch (err: any) { logger.error(`❌ ${err.message}`); process.exit(1); }
+    } catch (err: any) {
+      logger.error(`❌ ${err.message}`);
+      process.exit(1);
+    }
   });
 
-program.command('write').description('Write/update a section')
+program
+  .command('write')
+  .description('Write/update a section')
   .requiredOption('-d, --dir <path>', 'Project directory')
   .requiredOption('-n, --number <num>', 'Section number')
   .requiredOption('--name <name>', 'Section title')
@@ -37,10 +50,15 @@ program.command('write').description('Write/update a section')
       if (!content) throw new Error('Provide --file or --content');
       writeSectionFile(project, `section-${opts.number}`, parseInt(opts.number), opts.name, content);
       logger.info(`✅ Section ${opts.number} written`);
-    } catch (err: any) { logger.error(`❌ ${err.message}`); process.exit(1); }
+    } catch (err: any) {
+      logger.error(`❌ ${err.message}`);
+      process.exit(1);
+    }
   });
 
-program.command('compile').description('Compile LaTeX to PDF')
+program
+  .command('compile')
+  .description('Compile LaTeX to PDF')
   .requiredOption('-d, --dir <path>', 'Project directory')
   .option('--engine <name>', 'Compile engine')
   .action(async (opts) => {
@@ -55,14 +73,34 @@ program.command('compile').description('Compile LaTeX to PDF')
       }
       const outputDir = path.join(project.rootDir, 'output');
       fs.mkdirSync(outputDir, { recursive: true });
-      assembleFullPaper({ title: project.title, authors: project.authors, sections: project.sections, sectionContents, figures: project.figures, appendices: project.appendices, templateId: project.templateId }, outputDir);
+      assembleFullPaper(
+        {
+          title: project.title,
+          authors: project.authors,
+          sections: project.sections,
+          sectionContents,
+          figures: project.figures,
+          appendices: project.appendices,
+          templateId: project.templateId,
+        },
+        outputDir,
+      );
       const result = await compile({ workDir: outputDir, texFile: 'main.tex', engine: opts.engine as any });
       if (result.ok) logger.info(`✅ Compiled: ${result.pdfPath}`);
-      else { logger.error(`❌ Compile failed`); for (const e of result.errors) logger.error(`  - ${e.message}`); process.exit(1); }
-    } catch (err: any) { logger.error(`❌ ${err.message}`); process.exit(1); }
+      else {
+        logger.error(`❌ Compile failed`);
+        for (const e of result.errors) logger.error(`  - ${e.message}`);
+        process.exit(1);
+      }
+    } catch (err: any) {
+      logger.error(`❌ ${err.message}`);
+      process.exit(1);
+    }
   });
 
-program.command('status').description('Show project status')
+program
+  .command('status')
+  .description('Show project status')
   .requiredOption('-d, --dir <path>', 'Project directory')
   .action((opts) => {
     try {
@@ -71,7 +109,10 @@ program.command('status').description('Show project status')
       logger.info(`   Directory: ${project.rootDir}`);
       logger.info(`   Sections: ${project.sections.length}`);
       for (const s of project.sections) logger.info(`   \u23f3 \u00a7${s.number} ${s.title} [${s.status}]`);
-    } catch (err: any) { logger.error(`\u274c ${err.message}`); process.exit(1); }
+    } catch (err: any) {
+      logger.error(`\u274c ${err.message}`);
+      process.exit(1);
+    }
   });
 
 program.parse();

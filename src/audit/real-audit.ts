@@ -2,26 +2,47 @@
 // Replaces mock sub-auditors with actual LLM-based audit
 
 import type {
-  AuditDimension, AuditFindingFull, AuditInput, SubAuditAssignment, SubAuditReport,
+  AuditDimension,
+  AuditFindingFull,
+  AuditInput,
+  SubAuditAssignment,
+  SubAuditReport,
 } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.js';
 
 const DEFAULT_ASSIGNMENTS: SubAuditAssignment[] = [
   {
-    subId: 'A', model: 'deepseek-chat',
-    primaryDimensions: ['logic_consistency', 'terminology_consistency', 'structure_integrity', 'claim_evidence_chain', 'narrative_flow'],
+    subId: 'A',
+    model: 'deepseek-chat',
+    primaryDimensions: [
+      'logic_consistency',
+      'terminology_consistency',
+      'structure_integrity',
+      'claim_evidence_chain',
+      'narrative_flow',
+    ],
     secondaryDimensions: ['language_quality', 'math_correctness', 'novelty_alignment'],
-    focusHint: 'Check logical chains, terminology consistency, claim-evidence chains, narrative flow, structural completeness.',
+    focusHint:
+      'Check logical chains, terminology consistency, claim-evidence chains, narrative flow, structural completeness.',
   },
   {
-    subId: 'B', model: 'deepseek-chat',
-    primaryDimensions: ['citation_integrity', 'data_veracity', 'math_correctness', 'data_fidelity', 'inter_section_consistency'],
+    subId: 'B',
+    model: 'deepseek-chat',
+    primaryDimensions: [
+      'citation_integrity',
+      'data_veracity',
+      'math_correctness',
+      'data_fidelity',
+      'inter_section_consistency',
+    ],
     secondaryDimensions: ['logic_consistency', 'academic_format'],
-    focusHint: 'Check citation validity, numerical claims, data fidelity, cross-section consistency, formula correctness.',
+    focusHint:
+      'Check citation validity, numerical claims, data fidelity, cross-section consistency, formula correctness.',
   },
   {
-    subId: 'C', model: 'deepseek-chat',
+    subId: 'C',
+    model: 'deepseek-chat',
     primaryDimensions: ['language_quality', 'academic_format', 'novelty_alignment'],
     secondaryDimensions: ['citation_integrity', 'terminology_consistency', 'narrative_flow'],
     focusHint: 'Check grammar, academic style, novelty alignment, narrative flow, format compliance.',
@@ -29,7 +50,9 @@ const DEFAULT_ASSIGNMENTS: SubAuditAssignment[] = [
 ];
 
 let findingId = 0;
-function nextId(): string { return `f-${++findingId}-${Date.now().toString(36)}`; }
+function nextId(): string {
+  return `f-${++findingId}-${Date.now().toString(36)}`;
+}
 
 /**
  * Run a single Sub-Auditor with real LLM
@@ -60,9 +83,9 @@ Output ONLY valid JSON array of findings:
 
 If no issues found, output: []`;
 
-  const bibleSummary = `Terminology: ${input.bibleSummary.terminology.map(t => t.key).join(', ') || 'none'}
-Citations: ${input.bibleSummary.citationMap.map(c => c.key).join(', ') || 'none'}
-Data points: ${input.bibleSummary.dataPoints.map(d => `${d.key}=${d.value}`).join(', ') || 'none'}`;
+  const bibleSummary = `Terminology: ${input.bibleSummary.terminology.map((t) => t.key).join(', ') || 'none'}
+Citations: ${input.bibleSummary.citationMap.map((c) => c.key).join(', ') || 'none'}
+Data points: ${input.bibleSummary.dataPoints.map((d) => `${d.key}=${d.value}`).join(', ') || 'none'}`;
 
   const userPrompt = `Section: ${input.sectionId}
 
@@ -75,8 +98,14 @@ ${bibleSummary}
 Find all issues in this draft.`;
 
   try {
-    const response = await router.complete('auditor', systemPrompt, userPrompt, { temperature: 0, model: assignment.model });
-    const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const response = await router.complete('auditor', systemPrompt, userPrompt, {
+      temperature: 0,
+      model: assignment.model,
+    });
+    const cleaned = response
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
     const rawFindings = JSON.parse(cleaned);
 
     const findings: AuditFindingFull[] = (Array.isArray(rawFindings) ? rawFindings : []).map((f: any) => ({
@@ -91,11 +120,23 @@ Find all issues in this draft.`;
       status: 'open' as const,
     }));
 
-    return { subId: assignment.subId, model: assignment.model, findings, elapsedMs: Date.now() - start, mockMode: false };
+    return {
+      subId: assignment.subId,
+      model: assignment.model,
+      findings,
+      elapsedMs: Date.now() - start,
+      mockMode: false,
+    };
   } catch (err: any) {
     // Fallback to empty findings on error
     logger.error(`Sub-${assignment.subId} LLM audit failed: ${err.message}`);
-    return { subId: assignment.subId, model: assignment.model, findings: [], elapsedMs: Date.now() - start, mockMode: true };
+    return {
+      subId: assignment.subId,
+      model: assignment.model,
+      findings: [],
+      elapsedMs: Date.now() - start,
+      mockMode: true,
+    };
   }
 }
 
@@ -103,5 +144,5 @@ Find all issues in this draft.`;
  * Run full audit with real LLM sub-auditors
  */
 export async function runRealFullAudit(input: AuditInput, router: LLMRouter): Promise<SubAuditReport[]> {
-  return Promise.all(DEFAULT_ASSIGNMENTS.map(a => runRealSubAuditor(a, input, router)));
+  return Promise.all(DEFAULT_ASSIGNMENTS.map((a) => runRealSubAuditor(a, input, router)));
 }

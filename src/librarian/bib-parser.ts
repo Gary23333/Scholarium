@@ -54,10 +54,10 @@ export function parseBibFile(content: string): BibParseResult {
     lineNum += match[0].split('\n').length;
   }
 
-  const withDOI = entries.filter(e => e.fields.doi).length;
+  const withDOI = entries.filter((e) => e.fields.doi).length;
 
   return {
-    success: errors.filter(e => e.message.includes('Parse error')).length === 0,
+    success: errors.filter((e) => e.message.includes('Parse error')).length === 0,
     entries,
     errors,
     stats: { totalEntries: entries.length, withDOI, withoutDOI: entries.length - withDOI, duplicateKeys },

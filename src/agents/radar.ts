@@ -26,7 +26,15 @@ const JOURNAL_DATABASE: JournalProfile[] = [
     publisher: 'IEEE',
     format: 'IEEE',
     citationStyle: 'numeric',
-    sectionRequirements: ['abstract_250w', 'introduction', 'related_work', 'methodology', 'experiments', 'discussion', 'conclusion'],
+    sectionRequirements: [
+      'abstract_250w',
+      'introduction',
+      'related_work',
+      'methodology',
+      'experiments',
+      'discussion',
+      'conclusion',
+    ],
     wordLimit: { min: 6000, max: 12000 },
     figureLimit: 15,
     referenceLimit: 50,
@@ -41,7 +49,15 @@ const JOURNAL_DATABASE: JournalProfile[] = [
     publisher: 'ACM',
     format: 'ACM',
     citationStyle: 'numeric',
-    sectionRequirements: ['abstract', 'introduction', 'taxonomy', 'detailed_survey', 'comparison', 'future_directions', 'conclusion'],
+    sectionRequirements: [
+      'abstract',
+      'introduction',
+      'taxonomy',
+      'detailed_survey',
+      'comparison',
+      'future_directions',
+      'conclusion',
+    ],
     wordLimit: { min: 8000, max: 20000 },
     figureLimit: 20,
     referenceLimit: 100,
@@ -55,7 +71,14 @@ const JOURNAL_DATABASE: JournalProfile[] = [
     publisher: 'Springer Nature',
     format: 'Nature',
     citationStyle: 'numeric',
-    sectionRequirements: ['abstract_150w', 'main_text', 'methods', 'references', 'acknowledgements', 'author_contributions'],
+    sectionRequirements: [
+      'abstract_150w',
+      'main_text',
+      'methods',
+      'references',
+      'acknowledgements',
+      'author_contributions',
+    ],
     wordLimit: { min: 2000, max: 4000 },
     figureLimit: 6,
     referenceLimit: 50,
@@ -85,7 +108,15 @@ const JOURNAL_DATABASE: JournalProfile[] = [
     publisher: 'Elsevier',
     format: 'Elsevier',
     citationStyle: 'author-year',
-    sectionRequirements: ['abstract', 'introduction', 'literature_review', 'methodology', 'results', 'discussion', 'conclusion'],
+    sectionRequirements: [
+      'abstract',
+      'introduction',
+      'literature_review',
+      'methodology',
+      'results',
+      'discussion',
+      'conclusion',
+    ],
     wordLimit: { min: 5000, max: 8000 },
     figureLimit: 10,
     referenceLimit: 60,
@@ -99,7 +130,15 @@ const JOURNAL_DATABASE: JournalProfile[] = [
     publisher: 'Springer',
     format: 'Springer',
     citationStyle: 'author-year',
-    sectionRequirements: ['abstract', 'introduction', 'related_work', 'method', 'experiments', 'discussion', 'conclusion'],
+    sectionRequirements: [
+      'abstract',
+      'introduction',
+      'related_work',
+      'method',
+      'experiments',
+      'discussion',
+      'conclusion',
+    ],
     wordLimit: { min: 5000, max: 10000 },
     figureLimit: 12,
     referenceLimit: 60,
@@ -143,7 +182,16 @@ const JOURNAL_DATABASE: JournalProfile[] = [
     publisher: 'NeurIPS Foundation',
     format: 'NeurIPS',
     citationStyle: 'author-year',
-    sectionRequirements: ['abstract', 'introduction', 'related_work', 'method', 'experiments', 'discussion', 'conclusion', 'checklist'],
+    sectionRequirements: [
+      'abstract',
+      'introduction',
+      'related_work',
+      'method',
+      'experiments',
+      'discussion',
+      'conclusion',
+      'checklist',
+    ],
     wordLimit: { min: 4000, max: 8000 },
     figureLimit: 10,
     referenceLimit: 50,
@@ -182,25 +230,25 @@ export class RadarAgent {
   }
 
   getJournal(name: string): JournalProfile | undefined {
-    const direct = JOURNAL_DATABASE.find(j => j.name === name);
+    const direct = JOURNAL_DATABASE.find((j) => j.name === name);
     if (direct) return direct;
 
     // Fuzzy match
     const lower = name.toLowerCase();
-    return JOURNAL_DATABASE.find(j =>
-      j.name.toLowerCase().includes(lower) ||
-      j.publisher.toLowerCase().includes(lower)
+    return JOURNAL_DATABASE.find(
+      (j) => j.name.toLowerCase().includes(lower) || j.publisher.toLowerCase().includes(lower),
     );
   }
 
   searchJournals(query: string): JournalProfile[] {
     const lower = query.toLowerCase();
     if (!lower) return JOURNAL_DATABASE;
-    return JOURNAL_DATABASE.filter(j =>
-      j.name.toLowerCase().includes(lower) ||
-      j.publisher.toLowerCase().includes(lower) ||
-      j.domainFit.some(d => d.toLowerCase().includes(lower)) ||
-      j.format.toLowerCase().includes(lower)
+    return JOURNAL_DATABASE.filter(
+      (j) =>
+        j.name.toLowerCase().includes(lower) ||
+        j.publisher.toLowerCase().includes(lower) ||
+        j.domainFit.some((d) => d.toLowerCase().includes(lower)) ||
+        j.format.toLowerCase().includes(lower),
     );
   }
 
@@ -208,8 +256,8 @@ export class RadarAgent {
     if (!domain) return JOURNAL_DATABASE.slice(0, 5);
 
     const lower = domain.toLowerCase();
-    const scored = JOURNAL_DATABASE.map(j => {
-      const domainMatch = j.domainFit.filter(d => lower.includes(d.toLowerCase()) || d.toLowerCase().includes(lower));
+    const scored = JOURNAL_DATABASE.map((j) => {
+      const domainMatch = j.domainFit.filter((d) => lower.includes(d.toLowerCase()) || d.toLowerCase().includes(lower));
       let score = domainMatch.length * 10;
 
       // Prefer journals that match paper length expectations
@@ -223,7 +271,7 @@ export class RadarAgent {
     return scored
       .sort((a, b) => b.score - a.score)
       .slice(0, 5)
-      .map(s => s.journal);
+      .map((s) => s.journal);
   }
 
   async analyzeJournalWithLLM(journalName: string, paperAbstract: string): Promise<string> {
@@ -238,12 +286,17 @@ export class RadarAgent {
       const systemPrompt = `你是一位学术期刊投稿顾问。根据论文摘要和期刊要求，分析投稿的匹配度和需要调整的方面。
 输出 JSON: {"fitScore": 0-100, "strengths": ["匹配点"], "gaps": ["差距"], "adjustments": ["建议调整"]}`;
 
-      const content = await this.router!.complete('radar', systemPrompt,
+      const content = await this.router!.complete(
+        'radar',
+        systemPrompt,
         `论文摘要: ${paperAbstract}\n\n${journalInfo}`,
-        { temperature: 0.2, maxTokens: 1024 }
+        { temperature: 0.2, maxTokens: 1024 },
       );
 
-      const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const cleaned = content
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
       const parsed = JSON.parse(cleaned);
       return [
         `## 投稿分析: ${journalName}`,

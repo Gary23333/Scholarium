@@ -3,10 +3,7 @@
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.js';
-import type {
-  SocraticTurn, SocraticLayer, SocraticMode, DialogueHealth,
-  TurnTag,
-} from '../types/index.ts';
+import type { SocraticTurn, SocraticLayer, SocraticMode, DialogueHealth, TurnTag } from '../types/index.ts';
 
 export interface SocraticMentorInput {
   topic: string;
@@ -63,7 +60,10 @@ export class SocraticMentorAgent extends BaseAgent<SocraticMentorInput, Socratic
   readonly name = 'SocraticMentor';
   private router?: LLMRouter;
 
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: SocraticMentorInput): Promise<SocraticMentorOutput> {
     if (!this.router) return this.mockExecute(input);
@@ -71,12 +71,13 @@ export class SocraticMentorAgent extends BaseAgent<SocraticMentorInput, Socratic
     const { topic, currentLayer, turns, mode, userMessage } = input;
     const layerName = this.getLayerName(currentLayer);
     const layerQuestions = LAYER_CORE_QUESTIONS[currentLayer];
-    const recentTurns = turns.slice(-10).map(t =>
-      `${t.role === 'mentor' ? 'AI导师' : '用户'}: ${t.content}`
-    ).join('\n');
+    const recentTurns = turns
+      .slice(-10)
+      .map((t) => `${t.role === 'mentor' ? 'AI导师' : '用户'}: ${t.content}`)
+      .join('\n');
 
-    const insightCount = turns.filter(t => t.tags.includes('insight')).length;
-    const commitmentCount = turns.filter(t => t.tags.includes('commitment')).length;
+    const insightCount = turns.filter((t) => t.tags.includes('insight')).length;
+    const commitmentCount = turns.filter((t) => t.tags.includes('commitment')).length;
 
     const systemPrompt = `你是一位苏格拉底式研究导师，一位拥有 20+ 年经验的 Q1 国际期刊主编。
 你的核心原则：
@@ -105,7 +106,8 @@ ${userMessage}
 
     try {
       const content = await this.router.complete('socraticMentor', systemPrompt, userPrompt, {
-        temperature: 0.7, maxTokens: 1024,
+        temperature: 0.7,
+        maxTokens: 1024,
       });
       return this.parseOutput(content, currentLayer, turns.length);
     } catch (e) {
@@ -120,12 +122,21 @@ ${userMessage}
     const layerQuestions = LAYER_CORE_QUESTIONS[currentLayer];
 
     // Detect insight from user message
-    const insightKeywords = ['我发现', '我意识到', '原来', '关键在于', '创新点', '我认为核心', 'I realize', 'the key is'];
-    const hasInsight = insightKeywords.some(k => userMessage.includes(k));
+    const insightKeywords = [
+      '我发现',
+      '我意识到',
+      '原来',
+      '关键在于',
+      '创新点',
+      '我认为核心',
+      'I realize',
+      'the key is',
+    ];
+    const hasInsight = insightKeywords.some((k) => userMessage.includes(k));
 
     // Detect high certainty
     const certaintyMarkers = ['显然', '肯定', '毫无疑问', '一定', 'definitely', 'obviously', 'clearly'];
-    const hasCertainty = certaintyMarkers.some(m => userMessage.toLowerCase().includes(m));
+    const hasCertainty = certaintyMarkers.some((m) => userMessage.toLowerCase().includes(m));
 
     // Build reply
     let reply = '';
@@ -150,11 +161,11 @@ ${userMessage}
     }
 
     // Check if ready to advance (after 2+ turns with insights)
-    const layerInsights = turns.filter(t => t.layer === currentLayer && t.tags.includes('insight')).length;
-    const layerReadyToAdvance = layerInsights >= 1 && turnCount >= 2 && (turnCount % 3 === 0);
+    const layerInsights = turns.filter((t) => t.layer === currentLayer && t.tags.includes('insight')).length;
+    const layerReadyToAdvance = layerInsights >= 1 && turnCount >= 2 && turnCount % 3 === 0;
 
     // Health alert (simulated)
-    const agreementRatio = turns.filter(t => t.role === 'user').length > 0 ? 0.3 : 0;
+    const agreementRatio = turns.filter((t) => t.role === 'user').length > 0 ? 0.3 : 0;
     let healthAlert: { dimension: string; message: string } | undefined;
     if (agreementRatio > 0.8 && turnCount > 6) {
       healthAlert = { dimension: 'persistent_agreement', message: '对话中持续同意的模式过高，建议引入更多挑战' };
@@ -171,7 +182,11 @@ ${userMessage}
 
   private getLayerName(layer: SocraticLayer): string {
     const names: Record<SocraticLayer, string> = {
-      1: '问题框架', 2: '方法论反思', 3: '证据推理', 4: '观点评估', 5: '影响后果',
+      1: '问题框架',
+      2: '方法论反思',
+      3: '证据推理',
+      4: '观点评估',
+      5: '影响后果',
     };
     return names[layer];
   }

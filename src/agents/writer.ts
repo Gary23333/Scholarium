@@ -5,18 +5,25 @@ import type { LLMRouter } from '../llm/router.ts';
 export class WriterAgent extends BaseAgent<WriterInput, WriterOutput> {
   readonly name = 'Writer';
   private router?: LLMRouter;
-  constructor(router?: LLMRouter) { super(); this.router = router; }
+  constructor(router?: LLMRouter) {
+    super();
+    this.router = router;
+  }
 
   protected async realExecute(input: WriterInput): Promise<WriterOutput> {
     if (!this.router) return this.mockExecute(input);
     const { blueprint, context } = input;
     const isRevision = !!input.previousDraft && !!context.fixInstructions;
-    const approvedCites = context.citationPool.filter(c => c.approvalStatus === 'approved');
-    const citePoolInfo = approvedCites.length > 0
-      ? `Approved citation keys: ${approvedCites.map(c => c.citeKey).join(', ')}`
-      : 'No approved citations available.';
-    const bibleTerms = context.bibleSnapshot.filter(e => e.category === 'terminology').map(e => `${e.key}: ${e.value}`).join('\n');
-    const previousContext = context.previousSections?.map(s => `Section "${s.title}": ${s.summary}`).join('\n') ?? '';
+    const approvedCites = context.citationPool.filter((c) => c.approvalStatus === 'approved');
+    const citePoolInfo =
+      approvedCites.length > 0
+        ? `Approved citation keys: ${approvedCites.map((c) => c.citeKey).join(', ')}`
+        : 'No approved citations available.';
+    const bibleTerms = context.bibleSnapshot
+      .filter((e) => e.category === 'terminology')
+      .map((e) => `${e.key}: ${e.value}`)
+      .join('\n');
+    const previousContext = context.previousSections?.map((s) => `Section "${s.title}": ${s.summary}`).join('\n') ?? '';
     const sectionId = blueprint.sectionId ?? '';
     const isAbstract = sectionId.includes('abstract') || blueprint.sectionTitle?.includes('摘要');
     const wordLimit = isAbstract ? '200-300' : '200-600';
@@ -70,16 +77,22 @@ RULES:
     if (isRevision) {
       userPrompt = `REVISE based on: ${context.fixInstructions!.instruction}\n\nDraft:\n${input.previousDraft}\n\n${citePoolInfo}`;
     } else {
-      const paraDesc = blueprint.paragraphs.map(p => `- ${p.order}. [${p.purpose}]: ${p.coreSentence}`).join('\n');
+      const paraDesc = blueprint.paragraphs.map((p) => `- ${p.order}. [${p.purpose}]: ${p.coreSentence}`).join('\n');
       userPrompt = `Write section "${blueprint.sectionTitle}".\n\nStructure:\n${paraDesc}\n\n${previousContext ? `Context:\n${previousContext}\n` : ''}${citePoolInfo}`;
     }
-    const content = await this.router.complete('writer', systemPrompt, userPrompt, { temperature: 0.1, maxTokens: 16384, timeout: 600000 });
+    const content = await this.router.complete('writer', systemPrompt, userPrompt, {
+      temperature: 0.1,
+      maxTokens: 16384,
+      timeout: 600000,
+    });
     const wordCount = content.split(/\s+/).length;
     const usedCitations: string[] = [];
     const citeRegex = /\\cite\{([^}]+)\}/g;
     let match;
     while ((match = citeRegex.exec(content)) !== null) {
-      for (const k of match[1].split(',').map(s => s.trim())) { if (!usedCitations.includes(k)) usedCitations.push(k); }
+      for (const k of match[1].split(',').map((s) => s.trim())) {
+        if (!usedCitations.includes(k)) usedCitations.push(k);
+      }
     }
     return { texContent: content, wordCount, usedCitations };
   }
@@ -96,7 +109,9 @@ RULES:
     const usedCitations: string[] = [];
     const citeRegex = /\\cite\{([^}]+)\}/g;
     let match;
-    while ((match = citeRegex.exec(texContent)) !== null) { usedCitations.push(match[1]); }
+    while ((match = citeRegex.exec(texContent)) !== null) {
+      usedCitations.push(match[1]);
+    }
     return { texContent, wordCount: texContent.split(/\s+/).length, usedCitations };
   }
 
@@ -104,8 +119,8 @@ RULES:
     const topic = context.outline.title;
     const sectionTitle = blueprint.sectionTitle;
     const coreArg = context.currentSection.coreArgument;
-    const pool = context.citationPool.filter(c => c.approvalStatus === 'approved');
-    const citeKeys = pool.length > 0 ? pool.map(c => c.citeKey) : this.getDefaultCitations(sectionTitle);
+    const pool = context.citationPool.filter((c) => c.approvalStatus === 'approved');
+    const citeKeys = pool.length > 0 ? pool.map((c) => c.citeKey) : this.getDefaultCitations(sectionTitle);
     const sectionId = blueprint.sectionId;
     const st = sectionTitle.toLowerCase();
     const lines: string[] = [`\\section{${sectionTitle}}`, `\\label{sec:${sectionId.replace(/^\d+-/, '')}}`, ''];
@@ -122,16 +137,29 @@ RULES:
   private getDefaultCitations(sectionTitle: string): string[] {
     const st = sectionTitle.toLowerCase();
     if (st.includes('introduction')) return ['vaswani2017attention', 'devlin2019bert', 'brown2020language'];
-    if (st.includes('related')) return ['vaswani2017attention', 'radford2019language', 'devlin2019bert', 'raffel2020exploring', 'touvron2023llama'];
+    if (st.includes('related'))
+      return [
+        'vaswani2017attention',
+        'radford2019language',
+        'devlin2019bert',
+        'raffel2020exploring',
+        'touvron2023llama',
+      ];
     if (st.includes('method')) return ['vaswani2017attention', 'he2016deep', 'ba2016layer'];
-    if (st.includes('experiment') || st.includes('result')) return ['wang2019superglue', 'rajkumar2022evaluating', 'liang2022holistic'];
+    if (st.includes('experiment') || st.includes('result'))
+      return ['wang2019superglue', 'rajkumar2022evaluating', 'liang2022holistic'];
     if (st.includes('conclusion')) return ['vaswani2017attention', 'brown2020language'];
     return ['vaswani2017attention', 'devlin2019bert'];
   }
 
   private generateParagraph(
-    para: ParagraphBlueprint, sectionTitle: string, coreArg: string,
-    citeKeys: string[], topic: string, nthOfPurpose: number, st: string
+    para: ParagraphBlueprint,
+    sectionTitle: string,
+    coreArg: string,
+    citeKeys: string[],
+    topic: string,
+    nthOfPurpose: number,
+    st: string,
   ): string {
     const c1 = citeKeys[0] ?? 'vaswani2017attention';
     const c2 = citeKeys[1] ?? 'devlin2019bert';
@@ -195,8 +223,7 @@ RULES:
           return `The remainder of this paper is organized as follows. Section~\\ref{sec:related-work} reviews the relevant literature on attention mechanisms and efficient transformers. Section~\\ref{sec:methodology} presents our proposed method in detail. Section~\\ref{sec:experiments} describes our experimental setup and results, and Section~\\ref{sec:conclusion} concludes with a discussion of implications and future directions.`;
         if (st.includes('related'))
           return `In the following section, we describe our proposed method that addresses the limitations identified above.`;
-        if (st.includes('conclusion') || st.includes('experiment'))
-          return ''; // No transition in final sections
+        if (st.includes('conclusion') || st.includes('experiment')) return ''; // No transition in final sections
         return ''; // Skip generic transitions
 
       default:
@@ -205,7 +232,12 @@ RULES:
   }
 
   private extractTopic(title: string): string {
-    return title.replace(/^(Research on|A Study of|An Analysis of|Towards|Exploring)\s+/i, '').replace(/\s*:\s*.+$/, '').trim() || 'the proposed approach';
+    return (
+      title
+        .replace(/^(Research on|A Study of|An Analysis of|Towards|Exploring)\s+/i, '')
+        .replace(/\s*:\s*.+$/, '')
+        .trim() || 'the proposed approach'
+    );
   }
 
   private generateRevision(draft: string, fixes: any): string {
@@ -218,7 +250,10 @@ RULES:
       }
     }
     if (fixes.instruction?.includes('AI') || fixes.instruction?.includes('降低')) {
-      revised = revised.replace(/Furthermore,/g, 'In addition,').replace(/Moreover,/g, 'What is more,').replace(/significant attention/g, 'considerable interest');
+      revised = revised
+        .replace(/Furthermore,/g, 'In addition,')
+        .replace(/Moreover,/g, 'What is more,')
+        .replace(/significant attention/g, 'considerable interest');
     }
     return revised;
   }
