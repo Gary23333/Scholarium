@@ -108,14 +108,14 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     }
   }
 
-  private formatLLMOutput(parsed: any, input: CartographerInput): CartographerOutput {
+  private formatLLMOutput(parsed: unknown, input: CartographerInput): CartographerOutput {
     const { currentRound, existingNodes, selectedNodeIds } = input;
     const round = currentRound;
     let nodes: MindMapNode[] = [];
     let summary: string;
 
     if (round === 1) {
-      const items: string[] = Array.isArray(parsed) ? parsed.map((p: any) => p.label || p) : [];
+      const items: string[] = Array.isArray(parsed) ? (parsed as Record<string, unknown>[]).map((p) => String(p.label ?? p)) : [];
       nodes = items.map((label, i) => ({
         id: `r1-${i}`,
         label,
@@ -127,16 +127,16 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
       }));
       summary = `Round 1: Generated ${nodes.length} top-level branches`;
     } else if (round === 2) {
-      // parsed is { branchName: [{label}], ... }
+      const parsedObj = parsed as Record<string, unknown>;
       let idx = 0;
-      for (const [parentLabel, children] of Object.entries(parsed)) {
+      for (const [parentLabel, children] of Object.entries(parsedObj)) {
         if (!Array.isArray(children)) continue;
         const parent = existingNodes?.find((n) => n.label === parentLabel && selectedNodeIds?.includes(n.id));
         if (!parent) continue;
-        for (const child of children) {
+        for (const child of children as Record<string, unknown>[]) {
           nodes.push({
             id: `r2-${idx++}`,
-            label: child.label || String(child),
+            label: String(child.label ?? child),
             parentId: parent.id,
             round: 2,
             checked: false,
@@ -147,8 +147,9 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
       }
       summary = `Round 2: Generated ${nodes.length} sub-topics`;
     } else {
-      const gaps: string[] = parsed.gaps ?? [];
-      const novelty: string[] = parsed.noveltyCandidates ?? [];
+      const parsedObj = parsed as Record<string, unknown>;
+      const gaps: string[] = (parsedObj.gaps ?? []) as string[];
+      const novelty: string[] = (parsedObj.noveltyCandidates ?? []) as string[];
       nodes = [
         ...gaps.map((g, i) => ({
           id: `r3-gap-${i}`,
@@ -281,7 +282,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     ];
   }
 
-  private getMockSubTopics(parentLabel: string, topic: string): string[] {
+  private getMockSubTopics(parentLabel: string, _topic: string): string[] {
     const map: Record<string, string[]> = {
       'Linear Attention Mechanisms': [
         'Random feature map approximation (Performer)',
@@ -324,7 +325,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     );
   }
 
-  private getMockGaps(topic: string): string[] {
+  private getMockGaps(_topic: string): string[] {
     return [
       'Lack of unified benchmark comparing all efficient attention families under identical conditions',
       'Limited analysis of attention mechanism interaction with layer normalization and residual connections',
@@ -333,7 +334,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     ];
   }
 
-  private getMockNovelty(topic: string): string[] {
+  private getMockNovelty(_topic: string): string[] {
     return [
       'Adaptive attention switching based on input complexity and sequence length',
       'Hardware-software co-design for attention: jointly optimizing algorithm and kernel',

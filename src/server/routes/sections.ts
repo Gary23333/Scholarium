@@ -507,7 +507,7 @@ ${citeList}
         .trim();
 
       const refSectionId = 'references';
-      let refSection = p.sections.find((s) => s.id === refSectionId);
+      const refSection = p.sections.find((s) => s.id === refSectionId);
       if (refSection) {
         refSection.contentTex = cleaned;
         refSection.version++;

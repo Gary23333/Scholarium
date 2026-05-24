@@ -7,7 +7,8 @@ import type {
   PipelineRun,
   PipelinePhase,
   FixInstructions,
-  BibleEntry,
+  ConfirmedFocus,
+  JournalProfile,
 } from '../types/index.ts';
 import { resolveStateAfterRound } from '../state/machine.ts';
 import type { PlannerAgent } from '../agents/planner.ts';
@@ -23,7 +24,7 @@ import { runFullAudit } from '../audit/index.ts';
 import { runAntiAI } from '../anti-ai/index.ts';
 import { verifyIntegrity } from '../integrity/index.ts';
 import type { CitationRecord } from '../types/index.ts';
-import type { TaskManager, TaskPhase } from '../task-manager.ts';
+import type { TaskManager } from '../task-manager.ts';
 import { InputGovernance, buildGovernanceContext } from '../models/input-governance.ts';
 import type { LLMRouter } from '../llm/router.ts';
 
@@ -58,8 +59,8 @@ export class PipelineOrchestrator {
 
   async runPlanning(
     paperId: string,
-    confirmedFocus: any,
-    journalProfile?: any,
+    confirmedFocus: ConfirmedFocus,
+    journalProfile?: JournalProfile,
     options?: { mock?: boolean },
   ): Promise<PaperOutline> {
     const mock = options?.mock ?? false;
@@ -300,7 +301,6 @@ export class PipelineOrchestrator {
       if (taskId && taskManager) taskManager.updatePhase(taskId, 'audit', { status: 'completed', progress: 100 });
 
       // Anti-AI
-      let aiOk = true;
       let aiChangedSignificantly = false;
       if (!skipAntiAI) {
         if (taskId && taskManager) taskManager.updateProgress(taskId, 85 + round * 3, '正在去 AI 化...', 'anti-ai');
@@ -310,7 +310,7 @@ export class PipelineOrchestrator {
           if (changeRatio > 0.05) aiChangedSignificantly = true;
           draft = aiResult.text;
         }
-        aiOk = aiResult.score <= aiThreshold;
+        const aiOk = aiResult.score <= aiThreshold;
         if (!aiOk) {
           pendingFixes = { instruction: 'Reduce AI traces while preserving accuracy.', round };
           section.status = 'needs_fix';

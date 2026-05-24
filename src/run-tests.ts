@@ -151,7 +151,7 @@ async function main() {
     failures.push(`Execution error: ${e.message}`);
   } finally {
     api.stop();
-    try { fs.rmSync(dataDir, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(dataDir, { recursive: true, force: true }); } catch (_) { /* cleanup failure is safe to ignore */ }
   }
 
   console.log('\n' + '='.repeat(50));

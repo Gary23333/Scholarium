@@ -1,14 +1,14 @@
 // Devil's Advocate Agent — Core argument challenges, logical fallacies detection
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { DevilsAdvocateReport } from '../types/index.ts';
+import type { DevilsAdvocateReport, ReviewerConfig } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface DevilsAdvocateInput {
   paperContent: string;
   paperTitle: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class DevilsAdvocateAgent extends BaseAgent<DevilsAdvocateInput, DevilsAdvocateReport> {
@@ -76,7 +76,7 @@ export class DevilsAdvocateAgent extends BaseAgent<DevilsAdvocateInput, DevilsAd
     );
   }
 
-  private buildReport(data: any, input: DevilsAdvocateInput): DevilsAdvocateReport {
+  private buildReport(data: Record<string, unknown>, _input: DevilsAdvocateInput): DevilsAdvocateReport {
     return {
       reviewerId: randomUUID(),
       reviewerRole: 'da',
@@ -85,17 +85,17 @@ export class DevilsAdvocateAgent extends BaseAgent<DevilsAdvocateInput, DevilsAd
       scores: {},
       strengths: [],
       weaknesses: [],
-      findings: (data.findings ?? []).map((f: any) => ({ ...f, id: f.id ?? randomUUID() })),
-      verdict: data.verdict ?? 'major_revision',
-      confidence: data.confidence ?? 0.7,
-      summary: data.summary ?? '',
+      findings: ((data.findings ?? []) as Record<string, unknown>[]).map((f) => ({ ...f, id: (f.id as string | undefined) ?? randomUUID() })),
+      verdict: (data.verdict as string | undefined) ?? 'major_revision',
+      confidence: (data.confidence as number | undefined) ?? 0.7,
+      summary: (data.summary as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
-      strongestCounterArgument: data.strongestCounterArgument ?? '',
-      logicalFallacies: data.logicalFallacies ?? [],
-      alternativeExplanations: data.alternativeExplanations ?? [],
-      stakeholderBlindSpots: data.stakeholderBlindSpots ?? [],
-      soWhatTest: data.soWhatTest ?? '',
-      concessionRate: data.concessionRate ?? 0,
+      strongestCounterArgument: (data.strongestCounterArgument as string | undefined) ?? '',
+      logicalFallacies: (data.logicalFallacies as string[] | undefined) ?? [],
+      alternativeExplanations: (data.alternativeExplanations as string[] | undefined) ?? [],
+      stakeholderBlindSpots: (data.stakeholderBlindSpots as string[] | undefined) ?? [],
+      soWhatTest: (data.soWhatTest as string | undefined) ?? '',
+      concessionRate: (data.concessionRate as number | undefined) ?? 0,
     };
   }
 }

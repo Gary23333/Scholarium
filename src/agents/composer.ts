@@ -1,7 +1,5 @@
 import { BaseAgent } from './base.ts';
 import type {
-  AgentOptions,
-  BibleEntry,
   ContextPackage,
   FixInstructions,
   OutlineSection,
