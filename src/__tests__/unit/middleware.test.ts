@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { corsMiddleware, handlePreflight } from '../../server/middleware/cors.ts';
 import { handleRouteError } from '../../server/middleware/error-handler.ts';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -8,12 +8,14 @@ function mockResponse(): ServerResponse & {
   _statusCode: number;
   _body: string;
   _ended: boolean;
+  headersSent: boolean;
 } {
   return {
     _headers: {},
     _statusCode: -1,
     _body: '',
     _ended: false,
+    headersSent: false,
     writeHead(statusCode: number, headers?: Record<string, string>) {
       this._statusCode = statusCode;
       if (headers) Object.assign(this._headers, headers);
@@ -27,7 +29,13 @@ function mockResponse(): ServerResponse & {
       this._ended = true;
       return this;
     },
-  } as any;
+  } as unknown as ServerResponse & {
+    _headers: Record<string, string>;
+    _statusCode: number;
+    _body: string;
+    _ended: boolean;
+    headersSent: boolean;
+  };
 }
 
 function mockRequest(method: string): IncomingMessage {
@@ -129,7 +137,7 @@ describe('handleRouteError()', () => {
 
   it('should not write headers if already sent', () => {
     const res = mockResponse();
-    (res as any).headersSent = true;
+    res.headersSent = true;
 
     handleRouteError(new Error('late error'), res);
 

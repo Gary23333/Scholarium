@@ -78,7 +78,7 @@ export class PipelineOrchestrator {
   ): Promise<{ section: Section; state: SectionWriteState }> {
     const { mock = false, maxRounds = 3, aiThreshold = 0.5, skipAntiAI = false, taskId, taskManager } = options;
 
-    let section: Section = {
+    const section: Section = {
       id: sectionDef.id,
       paperId,
       sectionNumber: outline.sections.findIndex((s) => s.id === sectionDef.id) + 1,

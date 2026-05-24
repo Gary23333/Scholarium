@@ -73,13 +73,9 @@ RULES:
 - Write with precision: avoid filler phrases, be specific, be concise.
 - 强调你自己的想法，而不是强调别人的想法
 - Output ONLY LaTeX content.`;
-    let userPrompt = '';
-    if (isRevision) {
-      userPrompt = `REVISE based on: ${context.fixInstructions!.instruction}\n\nDraft:\n${input.previousDraft}\n\n${citePoolInfo}`;
-    } else {
-      const paraDesc = blueprint.paragraphs.map((p) => `- ${p.order}. [${p.purpose}]: ${p.coreSentence}`).join('\n');
-      userPrompt = `Write section "${blueprint.sectionTitle}".\n\nStructure:\n${paraDesc}\n\n${previousContext ? `Context:\n${previousContext}\n` : ''}${citePoolInfo}`;
-    }
+    const userPrompt = isRevision
+      ? `REVISE based on: ${context.fixInstructions!.instruction}\n\nDraft:\n${input.previousDraft}\n\n${citePoolInfo}`
+      : `Write section "${blueprint.sectionTitle}".\n\nStructure:\n${blueprint.paragraphs.map((p) => `- ${p.order}. [${p.purpose}]: ${p.coreSentence}`).join('\n')}\n\n${previousContext ? `Context:\n${previousContext}\n` : ''}${citePoolInfo}`;
     const content = await this.router.complete('writer', systemPrompt, userPrompt, {
       temperature: 0.1,
       maxTokens: 16384,

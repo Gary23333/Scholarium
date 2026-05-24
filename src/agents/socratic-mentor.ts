@@ -139,16 +139,16 @@ ${userMessage}
     const hasCertainty = certaintyMarkers.some((m) => userMessage.toLowerCase().includes(m));
 
     // Build reply
-    let reply = '';
     const newTags: TurnTag[] = [];
     let insightExtracted: string | undefined;
 
+    let reply = hasInsight
+      ? `这是一个很有洞察力的观察。${userMessage.length > 20 ? userMessage.slice(0, 30) + '...' : userMessage}\n\n`
+      : `我理解你的想法。让我进一步追问：\n\n`;
+
     if (hasInsight) {
-      reply = `这是一个很有洞察力的观察。${userMessage.length > 20 ? userMessage.slice(0, 30) + '...' : userMessage}\n\n`;
       newTags.push('insight');
       insightExtracted = userMessage.slice(0, 200);
-    } else {
-      reply = `我理解你的想法。让我进一步追问：\n\n`;
     }
 
     // Select next question based on turn count

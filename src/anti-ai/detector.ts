@@ -226,7 +226,6 @@ function computeSemanticConsistency(text: string): number {
   if (paragraphs.length < 2) return 0.4;
 
   // Check for uniform paragraph structure (AI hallmark)
-  let similarStructureCount = 0;
   const paraStats = paragraphs.map((p) => ({
     sentences: p.split(/[.!?。！？]\s+/).length,
     words: p.split(/\s+/).length,

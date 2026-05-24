@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import * as http from 'node:http';
+import * as net from 'node:net';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
@@ -35,7 +36,7 @@ let baseUrl: string;
 
 function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
-    const server = require('node:net').createServer();
+    const server = net.createServer();
     server.listen(0, '127.0.0.1', () => {
       const addr = server.address() as { port: number };
       server.close(() => resolve(addr.port));
@@ -44,7 +45,7 @@ function getFreePort(): Promise<number> {
   });
 }
 
-function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; data: any }> {
+function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; data: Record<string, unknown> }> {
   return new Promise((resolve, reject) => {
     const req = http.request(url, {
       method: opts?.method ?? 'GET',
@@ -56,8 +57,8 @@ function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; d
       let body = '';
       res.on('data', (chunk) => { body += chunk; });
       res.on('end', () => {
-        let data: any;
-        try { data = JSON.parse(body); } catch { data = body; }
+        let data: Record<string, unknown>;
+        try { data = JSON.parse(body); } catch { data = { raw: body }; }
         resolve({ status: res.statusCode ?? 0, data });
       });
     });
@@ -115,8 +116,8 @@ describe('Server Routes (Integration)', () => {
       });
       expect(status).toBe(200);
       expect(data).toHaveProperty('paperId');
-      expect(data.paper.title).toBe('Test Paper');
-      expect(data.paper.targetJournal).toBe('Nature');
+      expect((data.paper as Record<string, unknown>).title).toBe('Test Paper');
+      expect((data.paper as Record<string, unknown>).targetJournal).toBe('Nature');
     });
 
     it('should create paper with default title', async () => {
@@ -125,7 +126,7 @@ describe('Server Routes (Integration)', () => {
         body: JSON.stringify({}),
       });
       expect(status).toBe(200);
-      expect(data.paper.title).toBe('Untitled');
+      expect((data.paper as Record<string, unknown>).title).toBe('Untitled');
     });
   });
 

@@ -165,7 +165,9 @@ plt.close()
     // Cleanup temp file
     try {
       unlinkSync(tmpFile);
-    } catch {}
+    } catch (_) {
+      /* cleanup failure is safe to ignore */
+    }
 
     if (existsSync(outputFile)) {
       return outputFile;

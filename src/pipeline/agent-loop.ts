@@ -14,13 +14,13 @@ import type { PipelineDeps } from './orchestrator.ts';
 import { PipelineOrchestrator } from './orchestrator.ts';
 import { runFullAudit } from '../audit/index.ts';
 
-export interface AgentLoopDeps extends PipelineDeps {}
+export type AgentLoopDeps = PipelineDeps;
 
 export class AgentLoopOrchestrator {
-  private deps: AgentLoopDeps;
+  private deps: PipelineDeps;
   private loopState: AgentLoopState;
 
-  constructor(deps: AgentLoopDeps) {
+  constructor(deps: PipelineDeps) {
     this.deps = deps;
     this.loopState = {
       paperId: '',

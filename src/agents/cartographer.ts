@@ -1,7 +1,6 @@
 // Cartographer Agent — 学术制图师（思维导图发散）
 // 3轮发散策略：广度发散 → 深度挖掘 → 贡献定位
 import { BaseAgent } from './base.ts';
-import type { AgentOptions } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.ts';
 
@@ -59,8 +58,8 @@ export class CartographerAgent extends BaseAgent<CartographerInput, Cartographer
   private async llmExecute(input: CartographerInput): Promise<CartographerOutput> {
     const { researchTopic, keywords, targetJournal, selectedNodeIds, currentRound, existingNodes } = input;
 
-    let systemPrompt = '';
-    let userPrompt = '';
+    let systemPrompt: string;
+    let userPrompt: string;
 
     if (currentRound === 1) {
       systemPrompt = `You are an academic research topic explorer. Generate a mind map of research directions.
@@ -82,7 +81,6 @@ ${selectedLabels.map((l) => `- ${l}`).join('\n')}
 
 For each branch, generate 3-5 specific sub-topics or research questions.`;
     } else {
-      // Round 3: Contribution positioning
       const allLabels = existingNodes?.filter((n) => n.round <= 2).map((n) => `- ${n.label}`) ?? [];
 
       systemPrompt = `You are an academic research advisor. Identify research gaps and novelty opportunities.
@@ -114,7 +112,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     const { currentRound, existingNodes, selectedNodeIds } = input;
     const round = currentRound;
     let nodes: MindMapNode[] = [];
-    let summary = '';
+    let summary: string;
 
     if (round === 1) {
       const items: string[] = Array.isArray(parsed) ? parsed.map((p: any) => p.label || p) : [];

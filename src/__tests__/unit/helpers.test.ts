@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { json, error, parseBody, readBody } from '../../server/utils/helpers.ts';
 import type { ServerResponse, IncomingMessage } from 'node:http';
 

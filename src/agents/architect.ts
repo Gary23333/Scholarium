@@ -1,5 +1,5 @@
 import { BaseAgent } from './base.ts';
-import type { AgentOptions, OutlineSection, PaperOutline, SectionBlueprint, JournalProfile } from '../types/index.ts';
+import type { OutlineSection, PaperOutline, SectionBlueprint, JournalProfile } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
 
 export interface ArchitectInput {
