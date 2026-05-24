@@ -7,7 +7,10 @@ import { taskManager } from '../../task-manager.ts';
 import { handleRouteError } from '../middleware/error-handler.ts';
 import { logger } from '../../utils/logger.ts';
 
-type MindmapRouteContext = Pick<ServerContext, 'mmSessions' | 'sseClients' | 'cartographer' | 'db' | 'router' | 'hasLLMFor'>;
+type MindmapRouteContext = Pick<
+  ServerContext,
+  'mmSessions' | 'sseClients' | 'cartographer' | 'db' | 'router' | 'hasLLMFor'
+>;
 
 function mmSSESend(sseClients: Map<string, ServerResponse[]>, sid: string, data: any) {
   for (const c of sseClients.get(sid) ?? [])

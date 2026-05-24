@@ -10,7 +10,14 @@ export function isSafeUrl(urlStr: string): boolean {
   }
   if (!['http:', 'https:'].includes(parsed.protocol)) return false;
   const hostname = parsed.hostname.toLowerCase();
-  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]' || hostname === '0.0.0.0') return false;
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '[::1]' ||
+    hostname === '0.0.0.0'
+  )
+    return false;
   if (hostname.endsWith('.localhost') || hostname.endsWith('.local')) return false;
   const ipMatch = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname);
   if (ipMatch) {
@@ -23,7 +30,8 @@ export function isSafeUrl(urlStr: string): boolean {
     if (octets[0] === 127) return false;
   }
   const bareHostname = hostname.startsWith('[') && hostname.endsWith(']') ? hostname.slice(1, -1) : hostname;
-  if (bareHostname.startsWith('fc00:') || bareHostname.startsWith('fd00:') || bareHostname.startsWith('fe80:')) return false;
+  if (bareHostname.startsWith('fc00:') || bareHostname.startsWith('fd00:') || bareHostname.startsWith('fe80:'))
+    return false;
   const localIPs = getLocalIPs();
   if (localIPs.has(hostname)) return false;
   return true;
@@ -40,7 +48,9 @@ function getLocalIPs(): Set<string> {
         if (addr.address) _localIPs.add(addr.address);
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   _localIPsComputed = true;
   return _localIPs;
 }

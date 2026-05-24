@@ -13,7 +13,26 @@ import { latexToMarkdown, stripLatex } from '../utils/latex-to-md.ts';
 import { taskManager } from '../../task-manager.ts';
 import { logger } from '../../utils/logger.ts';
 
-type PapersRouteContext = Pick<ServerContext, 'papers' | 'planner' | 'architect' | 'composer' | 'writer' | 'observer' | 'normalizer' | 'bible' | 'db' | 'router' | 'config' | 'dataDir' | 'port' | 'persistSection' | 'hasLLMFor' | 'mmSessions' | 'sseClients'>;
+type PapersRouteContext = Pick<
+  ServerContext,
+  | 'papers'
+  | 'planner'
+  | 'architect'
+  | 'composer'
+  | 'writer'
+  | 'observer'
+  | 'normalizer'
+  | 'bible'
+  | 'db'
+  | 'router'
+  | 'config'
+  | 'dataDir'
+  | 'port'
+  | 'persistSection'
+  | 'hasLLMFor'
+  | 'mmSessions'
+  | 'sseClients'
+>;
 
 export function registerPapersRoutes(
   ctx: PapersRouteContext,
@@ -84,7 +103,11 @@ export function registerPapersRoutes(
         const clients = ctx.sseClients.get(mmId);
         if (clients) {
           for (const c of clients) {
-            try { c.end(); } catch { /* ignore */ }
+            try {
+              c.end();
+            } catch {
+              /* ignore */
+            }
           }
           ctx.sseClients.delete(mmId);
         }
@@ -301,7 +324,10 @@ export function registerPapersRoutes(
         .join('\n\n---\n\n');
 
       const buf = Buffer.from(md);
-      const asciiName = p.title.replace(/[^\x20-\x7e]/g, '_').replace(/["\r\n]/g, '').substring(0, 50);
+      const asciiName = p.title
+        .replace(/[^\x20-\x7e]/g, '_')
+        .replace(/["\r\n]/g, '')
+        .substring(0, 50);
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${asciiName}.md"`);
       res.setHeader('Content-Length', buf.length);
@@ -310,7 +336,10 @@ export function registerPapersRoutes(
     } else if (format === 'latex') {
       const latex = sections.map((s) => s.contentTex ?? '').join('\n\n');
       const buf = Buffer.from(latex);
-      const asciiName = p.title.replace(/[^\x20-\x7e]/g, '_').replace(/["\r\n]/g, '').substring(0, 50);
+      const asciiName = p.title
+        .replace(/[^\x20-\x7e]/g, '_')
+        .replace(/["\r\n]/g, '')
+        .substring(0, 50);
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${asciiName}.tex"`);
       res.setHeader('Content-Length', buf.length);

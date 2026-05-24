@@ -127,7 +127,8 @@ export function registerCitationRoutes(
       const userPrompt = isTemplate
         ? `URL: ${pageUrl}\nTitle: ${title}\nContent preview: ${cleanText}\n\nGenerate a citation following this EXACT template format. Replace each {{placeholder}} with the appropriate value from the page:\n\n${format}\n\nOutput ONLY the filled citation text, no other text.`
         : `URL: ${pageUrl}\nTitle: ${title}\nContent preview: ${cleanText}\n\nGenerate a citation in ${format || 'bibtex'} format. Include: author(s), title, publication date/access date, URL. Output ONLY the citation text.`;
-      const providerName = (model && Object.keys(ctx.config.llm.providers).find(k => model.startsWith(k))) || 'deepseek';
+      const providerName =
+        (model && Object.keys(ctx.config.llm.providers).find((k) => model.startsWith(k))) || 'deepseek';
       const client = new LLMClient({
         apiKey: ctx.config.llm.providers[providerName]?.apiKey || '',
         baseUrl: ctx.config.llm.providers[providerName]?.baseUrl || 'https://api.deepseek.com/v1',
@@ -165,7 +166,7 @@ export function registerCitationRoutes(
 
       const agentConfig = ctx.config.llm.models.citationGenerator;
       const selectedModel = model || agentConfig?.model || 'deepseek-v4-flash';
-      const providerName = Object.keys(ctx.config.llm.providers).find(k => selectedModel.startsWith(k)) || 'deepseek';
+      const providerName = Object.keys(ctx.config.llm.providers).find((k) => selectedModel.startsWith(k)) || 'deepseek';
       const provider = ctx.config.llm.providers[providerName];
 
       taskManager.updateProgress(task.id, 60, '正在生成模板...');

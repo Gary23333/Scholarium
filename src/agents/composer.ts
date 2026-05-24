@@ -1,10 +1,5 @@
 import { BaseAgent } from './base.ts';
-import type {
-  ContextPackage,
-  FixInstructions,
-  OutlineSection,
-  PaperOutline,
-} from '../types/index.ts';
+import type { ContextPackage, FixInstructions, OutlineSection, PaperOutline } from '../types/index.ts';
 import type { BibleManager } from '../bible/manager.ts';
 
 export interface ComposerInput {

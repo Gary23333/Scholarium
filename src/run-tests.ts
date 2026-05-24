@@ -19,27 +19,40 @@ function assert(condition: boolean, label: string) {
   }
 }
 
-function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; data: any; headers: Record<string, string> }> {
+function fetchJson(
+  url: string,
+  opts?: RequestInit,
+): Promise<{ status: number; data: any; headers: Record<string, string> }> {
   return new Promise((resolve, reject) => {
-    const req = http.request(url, {
-      method: opts?.method ?? 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(opts?.headers as Record<string, string> ?? {}),
+    const req = http.request(
+      url,
+      {
+        method: opts?.method ?? 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...((opts?.headers as Record<string, string>) ?? {}),
+        },
       },
-    }, (res) => {
-      let body = '';
-      res.on('data', (chunk) => { body += chunk; });
-      res.on('end', () => {
-        let data: any;
-        try { data = JSON.parse(body); } catch { data = body; }
-        const headers: Record<string, string> = {};
-        for (const [k, v] of Object.entries(res.headers)) {
-          if (typeof v === 'string') headers[k] = v;
-        }
-        resolve({ status: res.statusCode ?? 0, data, headers });
-      });
-    });
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          let data: any;
+          try {
+            data = JSON.parse(body);
+          } catch {
+            data = body;
+          }
+          const headers: Record<string, string> = {};
+          for (const [k, v] of Object.entries(res.headers)) {
+            if (typeof v === 'string') headers[k] = v;
+          }
+          resolve({ status: res.statusCode ?? 0, data, headers });
+        });
+      },
+    );
     req.on('error', reject);
     if (opts?.body) req.write(opts.body);
     req.end();
@@ -151,7 +164,11 @@ async function main() {
     failures.push(`Execution error: ${e.message}`);
   } finally {
     api.stop();
-    try { fs.rmSync(dataDir, { recursive: true, force: true }); } catch (_) { /* cleanup failure is safe to ignore */ }
+    try {
+      fs.rmSync(dataDir, { recursive: true, force: true });
+    } catch (_) {
+      /* cleanup failure is safe to ignore */
+    }
   }
 
   console.log('\n' + '='.repeat(50));

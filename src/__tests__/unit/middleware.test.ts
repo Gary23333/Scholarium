@@ -48,7 +48,9 @@ describe('corsMiddleware', () => {
     const res = mockResponse();
     let nextCalled = false;
 
-    corsMiddleware(req, res, () => { nextCalled = true; });
+    corsMiddleware(req, res, () => {
+      nextCalled = true;
+    });
 
     expect(res._headers['Access-Control-Allow-Origin']).toBe('*');
     expect(res._headers['Access-Control-Allow-Methods']).toBe('GET, POST, PUT, DELETE, OPTIONS');
@@ -61,7 +63,9 @@ describe('corsMiddleware', () => {
     const res = mockResponse();
     let nextCalled = false;
 
-    corsMiddleware(req, res, () => { nextCalled = true; });
+    corsMiddleware(req, res, () => {
+      nextCalled = true;
+    });
 
     expect(nextCalled).toBe(true);
   });

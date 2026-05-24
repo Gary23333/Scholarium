@@ -94,7 +94,13 @@ export class ScholariumDB {
   }
 
   // Paper
-  createPaper(id: string, title: string, targetJournal?: string, researchTopic?: string, contributionGaps?: string[]): void {
+  createPaper(
+    id: string,
+    title: string,
+    targetJournal?: string,
+    researchTopic?: string,
+    contributionGaps?: string[],
+  ): void {
     this.data.papers[id] = {
       id,
       title,

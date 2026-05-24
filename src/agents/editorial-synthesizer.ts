@@ -1,12 +1,7 @@
 // Editorial Synthesizer Agent — Synthesizes all reviews into editorial decision
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type {
-  ReviewReport,
-  EditorialDecision,
-  RevisionItem,
-  DevilsAdvocateReport,
-} from '../types/index.ts';
+import type { ReviewReport, EditorialDecision, RevisionItem, DevilsAdvocateReport } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -124,7 +119,10 @@ export class EditorialSynthesizerAgent extends BaseAgent<SynthesizerInput, Edito
     return {
       decision: (data.decision as EditorialDecision['decision'] | undefined) ?? 'major_revision',
       consensusSummary: (data.consensusSummary as string | undefined) ?? '',
-      revisionRoadmap: ((data.revisionRoadmap ?? []) as RevisionItem[]).map((r) => ({ ...r, id: r.id ?? randomUUID() })),
+      revisionRoadmap: ((data.revisionRoadmap ?? []) as RevisionItem[]).map((r) => ({
+        ...r,
+        id: r.id ?? randomUUID(),
+      })),
       traceabilityMatrix: [],
       daCriticalIssues: (data.daCriticalIssues as string[] | undefined) ?? [],
       editorNotes: (data.editorNotes as string | undefined) ?? '',

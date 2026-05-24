@@ -54,7 +54,7 @@ describe('BibleManager', () => {
       });
       const entries = bible.getEntries('paper-1');
       expect(entries.length).toBe(2);
-      const v2 = entries.find(e => e.id === id2);
+      const v2 = entries.find((e) => e.id === id2);
       expect(v2?.sourceArtifactVersion).toBe(2);
       db.close();
     });
@@ -88,8 +88,20 @@ describe('BibleManager', () => {
     it('should filter entries by sectionId', () => {
       const db = createDB();
       const bible = new BibleManager(db);
-      bible.addEntry({ paperId: 'paper-1', category: 'terminology', key: 'A', value: 'Alpha', sourceSectionId: 'sec-1' });
-      bible.addEntry({ paperId: 'paper-1', category: 'terminology', key: 'B', value: 'Beta', sourceSectionId: 'sec-2' });
+      bible.addEntry({
+        paperId: 'paper-1',
+        category: 'terminology',
+        key: 'A',
+        value: 'Alpha',
+        sourceSectionId: 'sec-1',
+      });
+      bible.addEntry({
+        paperId: 'paper-1',
+        category: 'terminology',
+        key: 'B',
+        value: 'Beta',
+        sourceSectionId: 'sec-2',
+      });
 
       const entries = bible.getEntries('paper-1', { sectionId: 'sec-1' });
       expect(entries.length).toBe(1);

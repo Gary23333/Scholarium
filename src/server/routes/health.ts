@@ -4,7 +4,11 @@ import { json } from '../utils/helpers.ts';
 
 export function registerHealthRoutes(
   ctx: ServerContext,
-  register: (method: string, path: string | RegExp, handler: (req: IncomingMessage, res: ServerResponse) => Promise<void>) => void,
+  register: (
+    method: string,
+    path: string | RegExp,
+    handler: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
+  ) => void,
 ): void {
   register('GET', '/api/health', async (_req, res) => {
     json(res, {
@@ -26,9 +30,7 @@ export function registerHealthRoutes(
 
     try {
       const hasProviders = Object.keys(ctx.config.llm.providers).length > 0;
-      const hasConfiguredProvider = Object.values(ctx.config.llm.providers).some(
-        (p) => p.apiKey && p.baseUrl,
-      );
+      const hasConfiguredProvider = Object.values(ctx.config.llm.providers).some((p) => p.apiKey && p.baseUrl);
       checks.llm = {
         ok: hasConfiguredProvider,
         detail: hasConfiguredProvider
@@ -42,10 +44,14 @@ export function registerHealthRoutes(
     }
 
     const allOk = Object.values(checks).every((c) => c.ok);
-    json(res, {
-      status: allOk ? 'ok' : 'degraded',
-      checks,
-      timestamp: new Date().toISOString(),
-    }, allOk ? 200 : 503);
+    json(
+      res,
+      {
+        status: allOk ? 'ok' : 'degraded',
+        checks,
+        timestamp: new Date().toISOString(),
+      },
+      allOk ? 200 : 503,
+    );
   });
 }

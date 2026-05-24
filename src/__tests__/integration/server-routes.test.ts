@@ -47,21 +47,31 @@ function getFreePort(): Promise<number> {
 
 function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; data: Record<string, unknown> }> {
   return new Promise((resolve, reject) => {
-    const req = http.request(url, {
-      method: opts?.method ?? 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(opts?.headers as Record<string, string> ?? {}),
+    const req = http.request(
+      url,
+      {
+        method: opts?.method ?? 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...((opts?.headers as Record<string, string>) ?? {}),
+        },
       },
-    }, (res) => {
-      let body = '';
-      res.on('data', (chunk) => { body += chunk; });
-      res.on('end', () => {
-        let data: Record<string, unknown>;
-        try { data = JSON.parse(body); } catch { data = { raw: body }; }
-        resolve({ status: res.statusCode ?? 0, data });
-      });
-    });
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          let data: Record<string, unknown>;
+          try {
+            data = JSON.parse(body);
+          } catch {
+            data = { raw: body };
+          }
+          resolve({ status: res.statusCode ?? 0, data });
+        });
+      },
+    );
     req.on('error', reject);
     if (opts?.body) req.write(opts.body);
     req.end();

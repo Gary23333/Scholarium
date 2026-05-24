@@ -115,7 +115,9 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     let summary: string;
 
     if (round === 1) {
-      const items: string[] = Array.isArray(parsed) ? (parsed as Record<string, unknown>[]).map((p) => String(p.label ?? p)) : [];
+      const items: string[] = Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>[]).map((p) => String(p.label ?? p))
+        : [];
       nodes = items.map((label, i) => ({
         id: `r1-${i}`,
         label,

@@ -280,15 +280,12 @@ export class ScholariumAPI {
 
   start(): Promise<void> {
     return new Promise((resolve) => {
-      const chain = composeMiddleware(
-        [corsMiddleware, loggerMiddleware],
-        (req, res) => {
-          if (handlePreflight(req, res)) return;
-          this.dispatch(req, res).catch((e: Error) => {
-            handleRouteError(e, res);
-          });
-        },
-      );
+      const chain = composeMiddleware([corsMiddleware, loggerMiddleware], (req, res) => {
+        if (handlePreflight(req, res)) return;
+        this.dispatch(req, res).catch((e: Error) => {
+          handleRouteError(e, res);
+        });
+      });
       this.server = http.createServer(chain);
       this.server.listen(this.opts.port, '0.0.0.0', () => {
         logger.info(`API: http://0.0.0.0:${this.opts.port}`);

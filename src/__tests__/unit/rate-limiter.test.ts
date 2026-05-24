@@ -45,7 +45,7 @@ describe('RateLimiter', () => {
         await limiter.acquire('test-domain');
       }
       const stats = limiter.getStats();
-      const domainStats = stats.find(s => s.domain === 'test-domain');
+      const domainStats = stats.find((s) => s.domain === 'test-domain');
       expect(domainStats?.tokens).toBe(0);
     });
   });

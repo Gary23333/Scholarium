@@ -3,10 +3,7 @@ import { error } from '../utils/helpers.ts';
 import { AppError } from './errors.ts';
 import { logger } from '../../utils/logger.ts';
 
-export function handleRouteError(
-  err: unknown,
-  res: ServerResponse,
-): void {
+export function handleRouteError(err: unknown, res: ServerResponse): void {
   if (res.headersSent) return;
 
   const isProduction = process.env.NODE_ENV === 'production';
@@ -33,8 +30,11 @@ export function handleRouteError(
     return;
   }
 
-  logger.error(`[INTERNAL_ERROR] ${err instanceof Error ? err.message : String(err)}`, err instanceof Error ? err : undefined);
+  logger.error(
+    `[INTERNAL_ERROR] ${err instanceof Error ? err.message : String(err)}`,
+    err instanceof Error ? err : undefined,
+  );
 
-  const message = isProduction ? 'Internal server error' : (err instanceof Error ? err.message : String(err));
+  const message = isProduction ? 'Internal server error' : err instanceof Error ? err.message : String(err);
   error(res, message, 500);
 }
