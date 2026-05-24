@@ -48,27 +48,27 @@ export class ReviewOrchestrator {
         paperContent,
         paperTitle,
         field: config.field,
-        reviewerConfig: config.reviewers.find((r: any) => r.role === 'eic'),
+        reviewerConfig: config.reviewers.find((r) => r.role === 'eic')!,
       }),
       this.deps.methodology.execute({
         paperContent,
         paperTitle,
-        reviewerConfig: config.reviewers.find((r: any) => r.role === 'methodology'),
+        reviewerConfig: config.reviewers.find((r) => r.role === 'methodology')!,
       }),
       this.deps.domain.execute({
         paperContent,
         paperTitle,
-        reviewerConfig: config.reviewers.find((r: any) => r.role === 'domain'),
+        reviewerConfig: config.reviewers.find((r) => r.role === 'domain')!,
       }),
       this.deps.perspective.execute({
         paperContent,
         paperTitle,
-        reviewerConfig: config.reviewers.find((r: any) => r.role === 'perspective'),
+        reviewerConfig: config.reviewers.find((r) => r.role === 'perspective')!,
       }),
       this.deps.da.execute({
         paperContent,
         paperTitle,
-        reviewerConfig: config.reviewers.find((r: any) => r.role === 'da'),
+        reviewerConfig: config.reviewers.find((r) => r.role === 'da')!,
       }),
     ]);
 

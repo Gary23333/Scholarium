@@ -1,7 +1,7 @@
 // Devil's Advocate Agent — Core argument challenges, logical fallacies detection
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { DevilsAdvocateReport, ReviewerConfig } from '../types/index.ts';
+import type { DevilsAdvocateReport, ReviewerConfig, ReviewFinding, ReviewVerdict } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -85,8 +85,8 @@ export class DevilsAdvocateAgent extends BaseAgent<DevilsAdvocateInput, DevilsAd
       scores: {},
       strengths: [],
       weaknesses: [],
-      findings: ((data.findings ?? []) as Record<string, unknown>[]).map((f) => ({ ...f, id: (f.id as string | undefined) ?? randomUUID() })),
-      verdict: (data.verdict as string | undefined) ?? 'major_revision',
+      findings: ((data.findings ?? []) as ReviewFinding[]).map((f) => ({ ...f, id: f.id ?? randomUUID() })),
+      verdict: (data.verdict as ReviewVerdict | undefined) ?? 'major_revision',
       confidence: (data.confidence as number | undefined) ?? 0.7,
       summary: (data.summary as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
