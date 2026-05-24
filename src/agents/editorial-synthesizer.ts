@@ -5,7 +5,6 @@ import type {
   ReviewReport,
   EditorialDecision,
   RevisionItem,
-  ConsensusLevel,
   DevilsAdvocateReport,
 } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
@@ -51,7 +50,7 @@ export class EditorialSynthesizerAgent extends BaseAgent<SynthesizerInput, Edito
 
   protected async mockExecute(input: SynthesizerInput): Promise<EditorialDecision> {
     // Aggregate findings from all reports
-    const allFindings = input.reports.flatMap((r) => r.findings);
+    const _allFindings = input.reports.flatMap((r) => r.findings);
     const daCriticals =
       input.daReport?.findings.filter((f) => f.severity === 'critical' || f.severity === 'major') ?? [];
 
@@ -121,14 +120,14 @@ export class EditorialSynthesizerAgent extends BaseAgent<SynthesizerInput, Edito
     };
   }
 
-  private buildDecision(data: any, input: SynthesizerInput): EditorialDecision {
+  private buildDecision(data: Record<string, unknown>, _input: SynthesizerInput): EditorialDecision {
     return {
-      decision: data.decision ?? 'major_revision',
-      consensusSummary: data.consensusSummary ?? '',
-      revisionRoadmap: (data.revisionRoadmap ?? []).map((r: any) => ({ ...r, id: r.id ?? randomUUID() })),
+      decision: (data.decision as EditorialDecision['decision'] | undefined) ?? 'major_revision',
+      consensusSummary: (data.consensusSummary as string | undefined) ?? '',
+      revisionRoadmap: ((data.revisionRoadmap ?? []) as RevisionItem[]).map((r) => ({ ...r, id: r.id ?? randomUUID() })),
       traceabilityMatrix: [],
-      daCriticalIssues: data.daCriticalIssues ?? [],
-      editorNotes: data.editorNotes ?? '',
+      daCriticalIssues: (data.daCriticalIssues as string[] | undefined) ?? [],
+      editorNotes: (data.editorNotes as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
     };
   }

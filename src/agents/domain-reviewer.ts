@@ -1,14 +1,14 @@
 // Domain Reviewer Agent — Literature coverage, theoretical framework, domain contribution
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport } from '../types/index.ts';
+import type { ReviewReport, ReviewerConfig, ReviewFinding, ReviewVerdict } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface DomainReviewerInput {
   paperContent: string;
   paperTitle: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class DomainReviewerAgent extends BaseAgent<DomainReviewerInput, ReviewReport> {
@@ -64,19 +64,19 @@ export class DomainReviewerAgent extends BaseAgent<DomainReviewerInput, ReviewRe
     );
   }
 
-  private buildReport(data: any, input: DomainReviewerInput): ReviewReport {
+  private buildReport(data: Record<string, unknown>, input: DomainReviewerInput): ReviewReport {
     return {
       reviewerId: randomUUID(),
       reviewerRole: 'domain',
       reviewerName: input.reviewerConfig?.name ?? 'R2',
       expertise: input.reviewerConfig?.expertise ?? '教育政策',
-      scores: data.scores ?? {},
-      strengths: data.strengths ?? [],
-      weaknesses: data.weaknesses ?? [],
-      findings: (data.findings ?? []).map((f: any) => ({ ...f, id: f.id ?? randomUUID() })),
-      verdict: data.verdict ?? 'minor_revision',
+      scores: (data.scores as Record<string, number> | undefined) ?? {},
+      strengths: (data.strengths as string[] | undefined) ?? [],
+      weaknesses: (data.weaknesses as string[] | undefined) ?? [],
+      findings: ((data.findings ?? []) as ReviewFinding[]).map((f) => ({ ...f, id: f.id ?? randomUUID() })),
+      verdict: (data.verdict as ReviewVerdict | undefined) ?? 'minor_revision',
       confidence: 0.8,
-      summary: data.summary ?? '',
+      summary: (data.summary as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
     };
   }

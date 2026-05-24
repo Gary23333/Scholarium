@@ -1,14 +1,14 @@
 // Methodology Reviewer Agent — Research design, statistical validity, reproducibility
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport } from '../types/index.ts';
+import type { ReviewReport, ReviewerConfig, ReviewFinding, ReviewVerdict } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface MethodologyReviewerInput {
   paperContent: string;
   paperTitle: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class MethodologyReviewerAgent extends BaseAgent<MethodologyReviewerInput, ReviewReport> {
@@ -71,19 +71,19 @@ export class MethodologyReviewerAgent extends BaseAgent<MethodologyReviewerInput
     );
   }
 
-  private buildReport(data: any, input: MethodologyReviewerInput): ReviewReport {
+  private buildReport(data: Record<string, unknown>, input: MethodologyReviewerInput): ReviewReport {
     return {
       reviewerId: randomUUID(),
       reviewerRole: 'methodology',
       reviewerName: input.reviewerConfig?.name ?? 'R1',
       expertise: input.reviewerConfig?.expertise ?? '研究方法论',
-      scores: data.scores ?? {},
-      strengths: data.strengths ?? [],
-      weaknesses: data.weaknesses ?? [],
-      findings: (data.findings ?? []).map((f: any) => ({ ...f, id: f.id ?? randomUUID() })),
-      verdict: data.verdict ?? 'major_revision',
+      scores: (data.scores as Record<string, number> | undefined) ?? {},
+      strengths: (data.strengths as string[] | undefined) ?? [],
+      weaknesses: (data.weaknesses as string[] | undefined) ?? [],
+      findings: ((data.findings ?? []) as ReviewFinding[]).map((f) => ({ ...f, id: f.id ?? randomUUID() })),
+      verdict: (data.verdict as ReviewVerdict | undefined) ?? 'major_revision',
       confidence: 0.75,
-      summary: data.summary ?? '',
+      summary: (data.summary as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
     };
   }

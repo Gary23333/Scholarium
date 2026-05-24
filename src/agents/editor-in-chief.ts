@@ -1,7 +1,7 @@
 // Editor-in-Chief Agent — Journal fit, originality, overall quality
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport, ReviewFinding } from '../types/index.ts';
+import type { ReviewReport, ReviewerConfig, ReviewFinding, ReviewVerdict } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -9,7 +9,7 @@ export interface EICInput {
   paperContent: string;
   paperTitle: string;
   field: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class EditorInChiefAgent extends BaseAgent<EICInput, ReviewReport> {
@@ -65,19 +65,19 @@ export class EditorInChiefAgent extends BaseAgent<EICInput, ReviewReport> {
     );
   }
 
-  private buildReport(data: any, input: EICInput): ReviewReport {
+  private buildReport(data: Record<string, unknown>, input: EICInput): ReviewReport {
     return {
       reviewerId: randomUUID(),
       reviewerRole: 'eic',
       reviewerName: input.reviewerConfig?.name ?? 'EIC',
       expertise: input.reviewerConfig?.expertise ?? '高等教育管理',
-      scores: data.scores ?? {},
-      strengths: data.strengths ?? [],
-      weaknesses: data.weaknesses ?? [],
-      findings: (data.findings ?? []).map((f: any) => ({ ...f, id: f.id ?? randomUUID() })),
-      verdict: data.verdict ?? 'major_revision',
+      scores: (data.scores as Record<string, number> | undefined) ?? {},
+      strengths: (data.strengths as string[] | undefined) ?? [],
+      weaknesses: (data.weaknesses as string[] | undefined) ?? [],
+      findings: ((data.findings ?? []) as ReviewFinding[]).map((f) => ({ ...f, id: f.id ?? randomUUID() })),
+      verdict: (data.verdict as ReviewVerdict | undefined) ?? 'major_revision',
       confidence: 0.8,
-      summary: data.summary ?? '',
+      summary: (data.summary as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
     };
   }

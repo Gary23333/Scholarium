@@ -24,19 +24,19 @@ function mockResponse(): ServerResponse {
 }
 
 function mockRequest(body: string | null, opts?: { method?: string }): IncomingMessage {
-  const listeners: Record<string, Function[]> = {};
+  const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
   const req = {
     method: opts?.method ?? 'POST',
-    on(event: string, fn: Function) {
+    on(event: string, fn: (...args: unknown[]) => void) {
       if (!listeners[event]) listeners[event] = [];
       listeners[event].push(fn);
     },
-    removeListener(event: string, fn: Function) {
+    removeListener(event: string, fn: (...args: unknown[]) => void) {
       if (listeners[event]) {
         listeners[event] = listeners[event].filter((f) => f !== fn);
       }
     },
-    emit(event: string, ...args: any[]) {
+    emit(event: string, ...args: unknown[]) {
       for (const fn of listeners[event] ?? []) fn(...args);
     },
   } as unknown as IncomingMessage;
@@ -122,13 +122,13 @@ describe('readBody()', () => {
   });
 
   it('should reject if body exceeds size limit', async () => {
-    const listeners: Record<string, Function[]> = {};
+    const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
     const req = {
-      on(event: string, fn: Function) {
+      on(event: string, fn: (...args: unknown[]) => void) {
         if (!listeners[event]) listeners[event] = [];
         listeners[event].push(fn);
       },
-      removeListener(event: string, fn: Function) {
+      removeListener(event: string, fn: (...args: unknown[]) => void) {
         if (listeners[event]) {
           listeners[event] = listeners[event].filter((f) => f !== fn);
         }

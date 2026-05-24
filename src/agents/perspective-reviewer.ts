@@ -1,14 +1,14 @@
 // Perspective Reviewer Agent — Cross-disciplinary connections, practical impact
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport } from '../types/index.ts';
+import type { ReviewReport, ReviewerConfig, ReviewFinding, ReviewVerdict } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface PerspectiveReviewerInput {
   paperContent: string;
   paperTitle: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class PerspectiveReviewerAgent extends BaseAgent<PerspectiveReviewerInput, ReviewReport> {
@@ -64,19 +64,19 @@ export class PerspectiveReviewerAgent extends BaseAgent<PerspectiveReviewerInput
     );
   }
 
-  private buildReport(data: any, input: PerspectiveReviewerInput): ReviewReport {
+  private buildReport(data: Record<string, unknown>, input: PerspectiveReviewerInput): ReviewReport {
     return {
       reviewerId: randomUUID(),
       reviewerRole: 'perspective',
       reviewerName: input.reviewerConfig?.name ?? 'R3',
       expertise: input.reviewerConfig?.expertise ?? '跨学科研究',
-      scores: data.scores ?? {},
-      strengths: data.strengths ?? [],
-      weaknesses: data.weaknesses ?? [],
-      findings: (data.findings ?? []).map((f: any) => ({ ...f, id: f.id ?? randomUUID() })),
-      verdict: data.verdict ?? 'minor_revision',
+      scores: (data.scores as Record<string, number> | undefined) ?? {},
+      strengths: (data.strengths as string[] | undefined) ?? [],
+      weaknesses: (data.weaknesses as string[] | undefined) ?? [],
+      findings: ((data.findings ?? []) as ReviewFinding[]).map((f) => ({ ...f, id: f.id ?? randomUUID() })),
+      verdict: (data.verdict as ReviewVerdict | undefined) ?? 'minor_revision',
       confidence: 0.75,
-      summary: data.summary ?? '',
+      summary: (data.summary as string | undefined) ?? '',
       generatedAt: new Date().toISOString(),
     };
   }
