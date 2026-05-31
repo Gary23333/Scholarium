@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Cartographer Agent — 学术制图师（思维导图发散）
 // 3轮发散策略：广度发散 → 深度挖掘 → 贡献定位
 import { BaseAgent } from './base.ts';

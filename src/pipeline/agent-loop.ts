@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Agent Loop Orchestrator -- InkOS autonomous multi-section pipeline
 import type {
   PaperOutline,
@@ -11,6 +12,7 @@ import type {
 import type { PipelineDeps } from './orchestrator.ts';
 import { PipelineOrchestrator } from './orchestrator.ts';
 import { runFullAudit } from '../audit/index.ts';
+import { getErrorMessage } from '../utils/logger.ts';
 
 export type AgentLoopDeps = PipelineDeps;
 
@@ -112,8 +114,8 @@ export class AgentLoopOrchestrator {
               `state=${state}`,
             );
             anyActionTaken = true;
-          } catch (e: any) {
-            this.recordStep(action, sectionDef, 'failure', e.message);
+          } catch (e: unknown) {
+            this.recordStep(action, sectionDef, 'failure', getErrorMessage(e));
             secState.status = 'failed';
           }
         } else if (action === 'audit_section') {
@@ -183,8 +185,8 @@ export class AgentLoopOrchestrator {
               state === 'passed' || state === 'human_review' ? 'success' : 'failure',
               `state=${state}`,
             );
-          } catch (e: any) {
-            this.recordStep(action, sectionDef, 'failure', e.message);
+          } catch (e: unknown) {
+            this.recordStep(action, sectionDef, 'failure', getErrorMessage(e));
           }
           anyActionTaken = true;
         } else if (action === 'check_bible') {

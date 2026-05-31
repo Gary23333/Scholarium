@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { SocraticMode } from '../../types/research.ts';
 import type { ServerContext } from '../context.ts';

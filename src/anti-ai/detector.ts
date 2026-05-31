@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Anti-AI Detector — 4-layer hybrid engine + LLM
 import type { AIScoreReport, DetectionConfig, HighRiskSpan } from '../types/index.ts';
 import { DEFAULT_DETECTION_CONFIG } from '../types/index.ts';

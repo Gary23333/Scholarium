@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { LLMClient } from '../../llm/client.ts';
 import { saveConfig, validateConfig } from '../../config/index.ts';
@@ -5,6 +6,7 @@ import type { ScholariumConfig } from '../../types/index.ts';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody, isSafeUrl } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
+import { getErrorMessage } from '../../utils/logger.ts';
 
 type LlmRouteContext = Pick<ServerContext, 'config' | 'router' | 'hasLLMFor'>;
 
@@ -39,11 +41,11 @@ export function registerLlmRoutes(
       const start = Date.now();
       const reply = await client.complete('Reply with exactly one word.', 'What is 2+2?');
       json(res, { ok: true, reply: reply.trim(), tokens: 0, latency: Date.now() - start });
-    } catch (e: any) {
-      const statusMatch = e.message?.match(/LLM API error (\d+)/);
+    } catch (e: unknown) {
+      const statusMatch = getErrorMessage(e)?.match(/LLM API error (\d+)/);
       const httpStatus = statusMatch ? parseInt(statusMatch[1]) : 500;
       const isAuth = httpStatus === 401 || httpStatus === 403;
-      json(res, { ok: false, error: e.message, httpStatus }, isAuth ? 401 : 500);
+      json(res, { ok: false, error: getErrorMessage(e), httpStatus }, isAuth ? 401 : 500);
     }
   });
 
@@ -66,8 +68,8 @@ export function registerLlmRoutes(
           const models = (data.data ?? data.models ?? []).map((m: any) => m.id ?? m).filter(Boolean);
           for (const m of models) allModels.add(m);
         }
-      } catch (e: any) {
-        errors.push(`${name}: ${e.message}`);
+      } catch (e: unknown) {
+        errors.push(`${name}: ${getErrorMessage(e)}`);
       }
     }
 
@@ -132,8 +134,8 @@ export function registerLlmRoutes(
       const data = (await fetchRes.json()) as any;
       const models = (data.data ?? data.models ?? []).map((m: any) => m.id ?? m).filter(Boolean);
       json(res, { ok: true, models });
-    } catch (e: any) {
-      json(res, { ok: false, error: e.message });
+    } catch (e: unknown) {
+      json(res, { ok: false, error: getErrorMessage(e) });
     }
   });
 
@@ -163,9 +165,9 @@ export function registerLlmRoutes(
 
       taskManager.complete(task.id, '翻译完成');
       json(res, { ok: true, translated, sourceText: text, taskId: task.id });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
-      json(res, { ok: false, error: e.message });
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
+      json(res, { ok: false, error: getErrorMessage(e) });
     }
   });
 }

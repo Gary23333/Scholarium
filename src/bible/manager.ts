@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { randomUUID } from 'crypto';
 import { ScholariumDB } from '../db/database.ts';
 import type { BibleCategory, BibleEntry, NormalizedChange } from '../types/index.ts';

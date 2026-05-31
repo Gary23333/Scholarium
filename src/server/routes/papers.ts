@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -11,6 +12,7 @@ import type { ServerContext, PaperProject } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { latexToMarkdown, stripLatex } from '../utils/latex-to-md.ts';
 import { taskManager } from '../../task-manager.ts';
+import { getErrorMessage } from '../../utils/logger.ts';
 
 type PapersRouteContext = Pick<
   ServerContext,
@@ -151,8 +153,8 @@ export function registerPapersRoutes(
 
       taskManager.complete(task.id, `完成，共 ${outline.sections.length} 个章节`);
       json(res, { outline, taskId: task.id });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
       throw e;
     }
   });
@@ -220,8 +222,8 @@ export function registerPapersRoutes(
       const contentLength = section.contentTex?.length || 0;
       taskManager.complete(task.id, `完成，状态: ${state}，字数: ${contentLength}`);
       json(res, { section, state, taskId: task.id });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
       throw e;
     }
   });
@@ -520,12 +522,12 @@ export function registerPapersRoutes(
         const { runFullAudit } = await import('../../audit/index.ts');
         const report = await runFullAudit(auditInput, ctx.router);
         results[sid] = { sectionId: sid, title: section.title, reportAvailable: true, report };
-      } catch (e: any) {
+      } catch (e: unknown) {
         results[sid] = {
           sectionId: sid,
           title: section.title,
           reportAvailable: false,
-          message: `Audit failed: ${e.message}`,
+          message: `Audit failed: ${getErrorMessage(e)}`,
         };
       }
     }

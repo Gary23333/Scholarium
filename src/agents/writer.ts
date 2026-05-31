@@ -1,5 +1,5 @@
 import { BaseAgent } from './base.ts';
-import type { WriterInput, WriterOutput, ParagraphBlueprint } from '../types/index.ts';
+import type { WriterInput, WriterOutput, ParagraphBlueprint, FixInstructions } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
 
 export class WriterAgent extends BaseAgent<WriterInput, WriterOutput> {
@@ -240,7 +240,7 @@ RULES:
     );
   }
 
-  private generateRevision(draft: string, fixes: any): string {
+  private generateRevision(draft: string, fixes: FixInstructions): string {
     let revised = draft;
     if (fixes.instruction?.includes('引用') || fixes.instruction?.includes('citation')) {
       if (fixes.citationReport?.fabricatedCitations?.length) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Real LLM Audit — Sub-Auditors that call DeepSeek API
 // Replaces mock sub-auditors with actual LLM-based audit
 

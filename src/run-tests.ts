@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as http from 'node:http';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { ScholariumAPI } from './server.ts';
+import { getErrorMessage } from './utils/logger.ts';
 
 let passed = 0;
 let failed = 0;
@@ -71,8 +73,8 @@ async function main() {
     api = new ScholariumAPI({ port, dataDir });
     await api.start();
     console.log(`Server started on port ${port}\n`);
-  } catch (e: any) {
-    console.error(`Failed to start server: ${e.message}`);
+  } catch (e: unknown) {
+    console.error(`Failed to start server: ${getErrorMessage(e)}`);
     process.exit(1);
   }
 
@@ -158,10 +160,10 @@ async function main() {
       const r = await fetchJson(`${base}/api/health`);
       assert(r.headers['access-control-allow-origin'] === '*', 'CORS header present on responses');
     }
-  } catch (e: any) {
-    console.error(`\nTest execution error: ${e.message}`);
+  } catch (e: unknown) {
+    console.error(`\nTest execution error: ${getErrorMessage(e)}`);
     failed++;
-    failures.push(`Execution error: ${e.message}`);
+    failures.push(`Execution error: ${getErrorMessage(e)}`);
   } finally {
     api.stop();
     try {

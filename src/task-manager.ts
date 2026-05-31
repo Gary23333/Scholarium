@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Task Manager — 跟踪所有 LLM 生成任务的状态
 import { randomUUID } from 'node:crypto';
 

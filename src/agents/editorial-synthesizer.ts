@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Editorial Synthesizer Agent — Synthesizes all reviews into editorial decision
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';

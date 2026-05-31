@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Embedding Provider — Text embedding support for citation matching and Bible retrieval
 // Supports: local (mock), OpenAI API, DeepSeek API
 

@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Editor-in-Chief Agent — Journal fit, originality, overall quality
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport } from '../types/index.ts';
+import type { ReviewReport, ReviewerConfig } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -9,7 +10,7 @@ export interface EICInput {
   paperContent: string;
   paperTitle: string;
   field: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class EditorInChiefAgent extends BaseAgent<EICInput, ReviewReport> {

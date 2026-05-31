@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import type { CartographerInput } from '../../agents/cartographer.ts';
@@ -6,6 +7,7 @@ import { json, error, parseBody, now } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
 import { handleRouteError } from '../middleware/error-handler.ts';
 import { logger } from '../../utils/logger.ts';
+import { getErrorMessage } from '../../utils/logger.ts';
 
 type MindmapRouteContext = Pick<
   ServerContext,
@@ -94,10 +96,10 @@ export function registerMindmapRoutes(
         totalNodes: s.nodes.length,
         taskId: task.id,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       logger.error('[MindMap] Cartographer failed:', e);
-      taskManager.fail(task.id, e.message);
-      mmSSESend(ctx.sseClients, b.sessionId, { type: 'error', message: e.message, ts: now() });
+      taskManager.fail(task.id, getErrorMessage(e));
+      mmSSESend(ctx.sseClients, b.sessionId, { type: 'error', message: getErrorMessage(e), ts: now() });
       handleRouteError(e, res);
     }
   });

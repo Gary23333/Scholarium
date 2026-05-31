@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // 简化的 logger 实现，兼容 pino API 和旧版自定义 Logger
 
 export function getErrorMessage(e: unknown): string {

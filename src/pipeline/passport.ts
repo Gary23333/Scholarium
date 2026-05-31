@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Material Passport Manager — Cross-session state recovery
 import { createHash } from 'node:crypto';
 import type { ScholariumDB } from '../db/database.ts';

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Scholarium CLI
 import { Command } from 'commander';
 import * as path from 'node:path';

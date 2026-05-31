@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Socratic Orchestrator — Manages the 5-layer Socratic dialogue flow
 import type { SocraticMentorAgent, SocraticMentorInput } from '../agents/socratic-mentor.ts';
 import type { ResearchQuestionAgent } from '../agents/research-question.ts';

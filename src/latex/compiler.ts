@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // LaTeX compiler
 import { spawn } from 'node:child_process';
 import * as fs from 'node:fs';

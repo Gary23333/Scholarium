@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Devil's Advocate Agent — Core argument challenges, logical fallacies detection
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { DevilsAdvocateReport } from '../types/index.ts';
+import type { DevilsAdvocateReport, ReviewerConfig } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface DevilsAdvocateInput {
   paperContent: string;
   paperTitle: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class DevilsAdvocateAgent extends BaseAgent<DevilsAdvocateInput, DevilsAdvocateReport> {

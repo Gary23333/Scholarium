@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Section } from '../../types/index.ts';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
+import { getErrorMessage } from '../../utils/logger.ts';
 
 type SectionsRouteContext = Pick<ServerContext, 'papers' | 'bible' | 'db' | 'router' | 'persistSection' | 'hasLLMFor'>;
 
@@ -73,13 +75,13 @@ export function registerSectionsRoutes(
       const { runFullAudit } = await import('../../audit/index.ts');
       const report = await runFullAudit(auditInput, ctx.router);
       json(res, { sectionId, title: section.title, status: section.status, reportAvailable: true, report });
-    } catch (e: any) {
+    } catch (e: unknown) {
       json(res, {
         sectionId,
         title: section.title,
         status: section.status,
         reportAvailable: false,
-        message: `Audit failed: ${e.message}`,
+        message: `Audit failed: ${getErrorMessage(e)}`,
       });
     }
   });
@@ -227,8 +229,8 @@ Please output the modified LaTeX content for this section.`;
       ctx.persistSection(paperId, section);
       taskManager.complete(task.id, '修改完成');
       json(res, { section, modified: true });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
       throw e;
     }
   });
@@ -354,8 +356,8 @@ Please optimize this section to ensure consistency with the modified section. Fo
 
       taskManager.complete(task.id, `优化完成，共 ${results.length} 个章节`);
       json(res, { optimized: results, taskId: task.id });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
       throw e;
     }
   });
@@ -539,8 +541,8 @@ ${citeList}
 
       taskManager.complete(task.id, `生成完成，共 ${allCites.length} 条参考文献`);
       json(res, { ok: true, content: cleaned, total: allCites.length });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
       throw e;
     }
   });

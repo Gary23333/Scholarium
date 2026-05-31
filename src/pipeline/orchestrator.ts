@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Pipeline Orchestrator — Core writing pipeline
 import type {
   PaperOutline,

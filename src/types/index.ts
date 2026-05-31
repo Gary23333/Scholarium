@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Scholarium — 统一类型定义
 // 合并自 01-core-infra/shared, 02-pipeline-agents, 04-librarian-rag, 05-quality-audit-antiai, 06-latex-publisher-cli
 

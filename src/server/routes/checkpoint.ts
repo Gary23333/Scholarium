@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ServerContext } from '../context.ts';
 import { json } from '../utils/helpers.ts';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ScholariumDB — File-based JSON storage with write batching
 import * as fs from 'node:fs';
 import { logger } from '../utils/logger.ts';

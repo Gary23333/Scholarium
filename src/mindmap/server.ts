@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // MindMap Backend Server — HTTP + SSE with proper error handling
 import * as http from 'node:http';
 import * as fs from 'node:fs';

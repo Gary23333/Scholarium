@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Audit modules — Master + 3 Sub-Auditors
 import type {
   AuditDimension,

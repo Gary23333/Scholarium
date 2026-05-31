@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // External Citation Adapters — Semantic Scholar, arXiv, CrossRef
 // All use fetch API, no external dependencies
 

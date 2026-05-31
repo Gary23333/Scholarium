@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ServerContext } from '../context.ts';
 import { json } from '../utils/helpers.ts';
+import { getErrorMessage } from '../../utils/logger.ts';
 
 export function registerHealthRoutes(
   ctx: ServerContext,
@@ -24,8 +25,8 @@ export function registerHealthRoutes(
     try {
       ctx.db.listPaperIds();
       checks.db = { ok: true };
-    } catch (e: any) {
-      checks.db = { ok: false, detail: e.message };
+    } catch (e: unknown) {
+      checks.db = { ok: false, detail: getErrorMessage(e) };
     }
 
     try {
@@ -39,8 +40,8 @@ export function registerHealthRoutes(
             ? 'No provider with apiKey and baseUrl configured'
             : 'No LLM providers configured',
       };
-    } catch (e: any) {
-      checks.llm = { ok: false, detail: e.message };
+    } catch (e: unknown) {
+      checks.llm = { ok: false, detail: getErrorMessage(e) };
     }
 
     const allOk = Object.values(checks).every((c) => c.ok);

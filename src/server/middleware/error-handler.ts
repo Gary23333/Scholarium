@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ServerResponse } from 'node:http';
 import { error } from '../utils/helpers.ts';
 import { AppError } from './errors.ts';

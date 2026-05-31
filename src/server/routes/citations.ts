@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { json, error, parseBody, isSafeUrl } from '../utils/helpers.ts';
 import type { ServerContext } from '../context.ts';
@@ -10,6 +11,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { taskManager } from '../../task-manager.ts';
 import { logger } from '../../utils/logger.ts';
+import { getErrorMessage } from '../../utils/logger.ts';
 
 type CitationContext = Pick<ServerContext, 'bible' | 'db' | 'config' | 'dataDir'>;
 
@@ -140,11 +142,11 @@ export function registerCitationRoutes(
 
       taskManager.complete(task.id, '引用格式生成完成');
       json(res, { ok: true, citation, title, url: pageUrl, taskId: task.id });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
       json(res, {
         ok: false,
-        error: e.message,
+        error: getErrorMessage(e),
         citation: `@misc{web,\n  title = {${pageUrl}},\n  howpublished = {\\url{${pageUrl}}},\n  note = {Accessed: ${new Date().toISOString().split('T')[0]}}\n}`,
       });
     }
@@ -190,9 +192,9 @@ export function registerCitationRoutes(
         template: { id: randomUUID(), ...template, createdAt: new Date().toISOString() },
         taskId: task.id,
       });
-    } catch (e: any) {
-      taskManager.fail(task.id, e.message);
-      json(res, { ok: false, error: e.message });
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
+      json(res, { ok: false, error: getErrorMessage(e) });
     }
   });
 
@@ -423,9 +425,9 @@ export function registerCitationRoutes(
           logger.info(`[lookup] ✗ Not found "${key}" (query: "${query}")`);
           results.push({ citeKey: key, found: false, error: 'No results from any source' });
         }
-      } catch (e: any) {
-        logger.info(`[lookup] ✗ Error "${key}": ${e.message}`);
-        results.push({ citeKey: key, found: false, error: e.message });
+      } catch (e: unknown) {
+        logger.info(`[lookup] ✗ Error "${key}": ${getErrorMessage(e)}`);
+        results.push({ citeKey: key, found: false, error: getErrorMessage(e) });
       }
     }
 

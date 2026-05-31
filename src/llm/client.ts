@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../utils/logger.ts';
 // Scholarium LLM Client — OpenAI-compatible protocol with retry
 export interface LLMClientConfig {

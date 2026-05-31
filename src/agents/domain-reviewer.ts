@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Domain Reviewer Agent — Literature coverage, theoretical framework, domain contribution
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport } from '../types/index.ts';
+import type { ReviewReport, ReviewerConfig } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface DomainReviewerInput {
   paperContent: string;
   paperTitle: string;
-  reviewerConfig: any;
+  reviewerConfig: ReviewerConfig;
 }
 
 export class DomainReviewerAgent extends BaseAgent<DomainReviewerInput, ReviewReport> {
