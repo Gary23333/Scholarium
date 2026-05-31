@@ -3,13 +3,7 @@ import type { SocraticMentorAgent, SocraticMentorInput } from '../agents/socrati
 import type { ResearchQuestionAgent } from '../agents/research-question.ts';
 import type { MethodologyAgent } from '../agents/methodology.ts';
 import type { ScholariumDB } from '../db/database.ts';
-import type {
-  SocraticSession,
-  SocraticTurn,
-  SocraticLayer,
-  SocraticMode,
-  ResearchBrief,
-} from '../types/index.ts';
+import type { SocraticSession, SocraticTurn, SocraticLayer, SocraticMode, ResearchBrief } from '../types/index.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface SocraticOrchestratorDeps {

@@ -1,10 +1,5 @@
 // Anti-AI Rewriter — rule-based + LLM rewrite
-import type {
-  RewriterInput,
-  RewriteResult,
-  RewriteDiffReport,
-  TextChange,
-} from '../types/index.ts';
+import type { RewriterInput, RewriteResult, RewriteDiffReport, TextChange } from '../types/index.ts';
 import { detect } from './detector.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.ts';
