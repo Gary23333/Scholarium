@@ -1,11 +1,11 @@
-# 🎓 Scholarium v2.0.1 — AI 学术论文多智能体写作系统
+# 🎓 Scholarium v2.1.0 — AI 学术论文多智能体写作系统
 
 > 23 个 AI Agent 协同工作，从研究问题到 LaTeX 论文，全流程自动化。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/Gary23333/Scholarium/actions/workflows/ci.yml/badge.svg)](https://github.com/Gary23333/Scholarium/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
-[![Version](https://img.shields.io/badge/version-2.0.1-green)](package.json)
+[![Version](https://img.shields.io/badge/version-2.1.0-green)](package.json)
 
 **Scholarium** 是一个 Multi-Agent 学术论文写作引擎。你输入一个研究方向，23 个专用 AI Agent 会在 **5 层苏格拉底对话**中帮你聚焦研究问题，通过**思维导图三轮发散**定位创新点，生成大纲并逐节撰写，经过 **18 维审计** + **6 维 AI 检测** + **7 代理同行评审**后，最终输出可编译的 LaTeX 论文。
 

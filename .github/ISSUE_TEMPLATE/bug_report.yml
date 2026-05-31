@@ -49,7 +49,7 @@ body:
     attributes:
       label: Scholarium Version
       description: Output of `node -v` and the Scholarium version from package.json
-      placeholder: "Node 22.x, Scholarium v2.0.1"
+      placeholder: "Node 22.x, Scholarium v2.1.0"
     validations:
       required: true
 

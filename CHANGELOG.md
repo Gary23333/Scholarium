@@ -5,6 +5,27 @@ All notable changes to Scholarium will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-06-01
+
+### Added
+- CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md for open source governance
+- CHANGELOG.md, ROADMAP.md for project transparency
+- GitHub issue templates (bug report, feature request, documentation)
+- Pull request template with structured sections
+- README badges (CI status) and community governance links
+
+### Changed
+- Re-enabled @typescript-eslint/no-explicit-any as warn (0 warnings)
+- Fixed catch(e: any) → catch(e: unknown) with getErrorMessage() across 21 files
+- Typed reviewerConfig as ReviewerConfig in all 5 reviewer agents
+- Typed generateRevision parameter as FixInstructions in writer
+- Added eslint-disable annotations for legitimate any usage (DB, routes, LLM parsers)
+
+### Fixed
+- All ESLint errors and warnings resolved (0 errors, 0 warnings)
+- Prettier formatting across entire codebase
+- Unused imports and variables cleaned up across 30+ files
+
 ## [2.0.1] - 2026-05-30
 
 ### Fixed
@@ -58,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic pipeline: research question to LaTeX paper
 - Core agent framework with LLM routing
 
+[2.1.0]: https://github.com/Gary23333/Scholarium/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/Gary23333/Scholarium/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Gary23333/Scholarium/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/Gary23333/Scholarium/releases/tag/v1.5.0

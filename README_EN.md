@@ -1,10 +1,10 @@
-# 🎓 Scholarium v2.0.1 — AI-Powered Multi-Agent Academic Paper Writing System
+# 🎓 Scholarium v2.1.0 — AI-Powered Multi-Agent Academic Paper Writing System
 
 > 23 AI Agents working in concert — from research question to LaTeX paper, fully automated.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
-[![Version](https://img.shields.io/badge/version-2.0.1-green)](package.json)
+[![Version](https://img.shields.io/badge/version-2.1.0-green)](package.json)
 
 **Scholarium** is a multi-agent academic writing engine. Give it a research direction, and 23 specialized AI Agents will guide you through **5-layer Socratic dialogue**, pinpoint your innovation via **3-round mind-map divergence**, generate an outline, write the paper section by section, run it through **18-dimension audits**, **6-dimension AI detection**, and **7-agent peer review**, then output a compilable LaTeX paper.
 
