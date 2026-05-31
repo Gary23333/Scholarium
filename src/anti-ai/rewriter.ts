@@ -4,7 +4,6 @@ import type {
   RewriteResult,
   RewriteDiffReport,
   TextChange,
-  ProtectedSpanForRewrite,
 } from '../types/index.ts';
 import { detect } from './detector.ts';
 import type { LLMRouter } from '../llm/router.ts';

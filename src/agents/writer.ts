@@ -1,5 +1,5 @@
 import { BaseAgent } from './base.ts';
-import type { AgentOptions, WriterInput, WriterOutput, ParagraphBlueprint } from '../types/index.ts';
+import type { WriterInput, WriterOutput, ParagraphBlueprint } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
 
 export class WriterAgent extends BaseAgent<WriterInput, WriterOutput> {
@@ -19,7 +19,7 @@ export class WriterAgent extends BaseAgent<WriterInput, WriterOutput> {
       approvedCites.length > 0
         ? `Approved citation keys: ${approvedCites.map((c) => c.citeKey).join(', ')}`
         : 'No approved citations available.';
-    const bibleTerms = context.bibleSnapshot
+    const _bibleTerms = context.bibleSnapshot
       .filter((e) => e.category === 'terminology')
       .map((e) => `${e.key}: ${e.value}`)
       .join('\n');
@@ -164,8 +164,8 @@ RULES:
     const c1 = citeKeys[0] ?? 'vaswani2017attention';
     const c2 = citeKeys[1] ?? 'devlin2019bert';
     const c3 = citeKeys[2] ?? 'brown2020language';
-    const c4 = citeKeys[3] ?? 'raffel2020exploring';
-    const c5 = citeKeys[4] ?? 'touvron2023llama';
+    const _c4 = citeKeys[3] ?? 'raffel2020exploring';
+    const _c5 = citeKeys[4] ?? 'touvron2023llama';
     const topicShort = this.extractTopic(topic);
 
     switch (para.purpose) {

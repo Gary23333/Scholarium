@@ -5,8 +5,6 @@ import type {
   Section,
   SectionWriteState,
   AgentLoopAction,
-  AgentLoopStep,
-  AgentLoopSectionState,
   AgentLoopState,
   AgentLoopOptions,
 } from '../types/index.ts';

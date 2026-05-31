@@ -1,8 +1,6 @@
 // Embedding Provider — Text embedding support for citation matching and Bible retrieval
 // Supports: local (mock), OpenAI API, DeepSeek API
 
-import { logger } from '../utils/logger.ts';
-
 export interface EmbeddingResult {
   embedding: number[];
   model: string;
@@ -75,13 +73,13 @@ export class LocalEmbeddingProvider implements EmbeddingProvider {
     }
 
     const vec = new Array(this.dim).fill(0);
-    let i = 0;
+    let _i = 0;
     for (const [word, count] of freq) {
       const tf = count / words.length;
       const hash = this.hashString(word);
       const idx = hash % this.dim;
       vec[idx] += tf * (1 + Math.log(words.length / count));
-      i++;
+      _i++;
     }
 
     // Normalize
@@ -166,7 +164,7 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
     }
 
     const data = (await resp.json()) as any;
-    return (data.data ?? []).map((d: any, i: number) => ({
+    return (data.data ?? []).map((d: any, _i: number) => ({
       embedding: d.embedding ?? [],
       model: data.model ?? this.config.model,
       tokens: data.usage?.total_tokens ?? 0,

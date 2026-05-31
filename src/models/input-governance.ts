@@ -136,7 +136,7 @@ export class InputGovernance {
     // Check for claimed data points that don't match Bible
     for (const [key, value] of ctx.approvedDataKeys) {
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const escapedVal = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const _escapedVal = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const userPattern = new RegExp(`${escapedKey}[^.]*?[=:是][^.]*?(\\d+\\.?\\d*\\s*%?)`, 'i');
       const draftMatch = draft.match(userPattern);
       if (draftMatch) {
@@ -268,7 +268,7 @@ export class InputGovernance {
     return result;
   }
 
-  private checkDataPrecision(input: WriterInput, ctx: GovernanceContext): GovernanceViolation[] {
+  private checkDataPrecision(input: WriterInput, _ctx: GovernanceContext): GovernanceViolation[] {
     const result: GovernanceViolation[] = [];
     if (!input.previousDraft) return result;
     const draft = input.previousDraft;

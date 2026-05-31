@@ -129,7 +129,7 @@ Analyze this academic text and return the AI-detection scores in JSON format.`;
     .replace(/```\n?/g, '')
     .trim();
   const parsed = JSON.parse(cleaned);
-  const highRiskSpans: HighRiskSpan[] = (parsed.highRiskSpans ?? []).map((s: any, i: number) => ({
+  const highRiskSpans: HighRiskSpan[] = (parsed.highRiskSpans ?? []).map((s: any, _i: number) => ({
     id: `span-llm-${++spanId}`,
     start: 0,
     end: 0,
@@ -226,7 +226,7 @@ function computeSemanticConsistency(text: string): number {
   if (paragraphs.length < 2) return 0.4;
 
   // Check for uniform paragraph structure (AI hallmark)
-  const similarStructureCount = 0;
+  const _similarStructureCount = 0;
   const paraStats = paragraphs.map((p) => ({
     sentences: p.split(/[.!?。！？]\s+/).length,
     words: p.split(/\s+/).length,

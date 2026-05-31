@@ -11,7 +11,6 @@ import type { ServerContext, PaperProject } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { latexToMarkdown, stripLatex } from '../utils/latex-to-md.ts';
 import { taskManager } from '../../task-manager.ts';
-import { logger } from '../../utils/logger.ts';
 
 type PapersRouteContext = Pick<
   ServerContext,

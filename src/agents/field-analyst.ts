@@ -1,7 +1,7 @@
 // Field Analyst Agent — Identifies paper field and configures reviewer personas
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewerConfigCard, ReviewerConfig } from '../types/index.ts';
+import type { ReviewerConfigCard } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 
 export interface FieldAnalystInput {
@@ -41,7 +41,7 @@ export class FieldAnalystAgent extends BaseAgent<FieldAnalystInput, ReviewerConf
   }
 
   protected async mockExecute(input: FieldAnalystInput): Promise<ReviewerConfigCard> {
-    const title = input.paperTitle;
+    const _title = input.paperTitle;
     return {
       field: '教育学',
       subField: '高等教育质量保障',

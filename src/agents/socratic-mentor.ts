@@ -3,7 +3,7 @@
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.ts';
-import type { SocraticTurn, SocraticLayer, SocraticMode, DialogueHealth, TurnTag } from '../types/index.ts';
+import type { SocraticTurn, SocraticLayer, SocraticMode, TurnTag } from '../types/index.ts';
 
 export interface SocraticMentorInput {
   topic: string;
@@ -117,7 +117,7 @@ ${userMessage}
   }
 
   protected async mockExecute(input: SocraticMentorInput): Promise<SocraticMentorOutput> {
-    const { topic, currentLayer, turns, userMessage } = input;
+    const { topic: _topic, currentLayer, turns, userMessage } = input;
     const turnCount = turns.length;
     const layerQuestions = LAYER_CORE_QUESTIONS[currentLayer];
 

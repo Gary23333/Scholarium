@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { json, error, parseBody, readBody } from '../../server/utils/helpers.ts';
 import type { ServerResponse, IncomingMessage } from 'node:http';
 
@@ -37,7 +37,7 @@ function mockRequest(body: string | null, opts?: { method?: string }): IncomingM
         listeners[event] = listeners[event].filter((f) => f !== fn);
       }
     },
-    emit(event: string, ...args: any[]) {
+    emit(event: string, ...args: unknown[]) {
       for (const fn of listeners[event] ?? []) fn(...args);
     },
   } as unknown as IncomingMessage;

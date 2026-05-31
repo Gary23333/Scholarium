@@ -8,9 +8,7 @@ import type {
   SocraticTurn,
   SocraticLayer,
   SocraticMode,
-  DialogueHealth,
   ResearchBrief,
-  MethodologyBlueprint,
 } from '../types/index.ts';
 import { randomUUID } from 'node:crypto';
 
@@ -336,7 +334,7 @@ export class SocraticOrchestrator {
     return questions[layer];
   }
 
-  private getDivergenceReveal(layer: SocraticLayer, commitment: string, topic: string): string {
+  private getDivergenceReveal(layer: SocraticLayer, commitment: string, _topic: string): string {
     const reveals: Record<SocraticLayer, string> = {
       1: `这是一个有趣的选择。我注意到你倾向于${commitment.slice(0, 30)}... 不过，我见过一些研究从完全不同的角度——比如跨学科视角——得出了令人惊讶的结论。你考虑过这种可能性吗？`,
       2: `你的预期很有道理。不过，实际数据有时会出人意料。如果结果与你的预期相反，你的方法能检测到这种差异吗？`,

@@ -64,9 +64,9 @@ export async function renderMermaid(
   }
 }
 
-function formatMermaidAsLaTeX(diagram: string, options: MermaidOptions): string {
+function formatMermaidAsLaTeX(diagram: string, _options: MermaidOptions): string {
   // Return as a LaTeX comment with URL for external rendering
-  const encoded = encodeURIComponent(diagram);
+  const _encoded = encodeURIComponent(diagram);
   const url = `https://mermaid.ink/svg/${Buffer.from(diagram).toString('base64')}`;
   return `% Mermaid diagram (render externally):\n% ${url}\n% Raw diagram:\n% ${diagram.replace(/\n/g, '\n% ')}`;
 }

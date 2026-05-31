@@ -1,7 +1,7 @@
 // Editor-in-Chief Agent — Journal fit, originality, overall quality
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
-import type { ReviewReport, ReviewFinding } from '../types/index.ts';
+import type { ReviewReport } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import { randomUUID } from 'node:crypto';
 

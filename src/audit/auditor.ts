@@ -8,7 +8,6 @@ import type {
   SubAuditAssignment,
   SubAuditReport,
   VoteConsensus,
-  Severity,
 } from '../types/index.ts';
 import { logger } from '../utils/logger.ts';
 import type { LLMRouter } from '../llm/router.ts';
@@ -167,7 +166,7 @@ function runMockSubAudit(assignment: SubAuditAssignment, input: AuditInput): Aud
       const prev = paragraphs[i - 1].trim();
       const curr = paragraphs[i].trim();
       if (prev && curr && prev.length > 50 && curr.length > 50) {
-        const prevEnd = prev.substring(Math.max(0, prev.length - 60));
+        const _prevEnd = prev.substring(Math.max(0, prev.length - 60));
         const currStart = curr.substring(0, 60);
         const hasTransition =
           /(因此|然而|此外|具体地|基于此|furthermore|however|moreover|specifically|building on|consequently)/i.test(
@@ -403,7 +402,7 @@ function runMockSubAudit(assignment: SubAuditAssignment, input: AuditInput): Aud
         claimMatch.index + claimMatch[0].length,
         claimMatch.index + claimMatch[0].length + 60,
       );
-      const surroundingText = before + claimMatch[0] + after;
+      const _surroundingText = before + claimMatch[0] + after;
       // Check if there's a citation within 100 chars
       const nearbyCite = draft.substring(
         Math.max(0, claimMatch.index - 100),

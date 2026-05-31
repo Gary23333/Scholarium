@@ -11,7 +11,7 @@ export function getErrorMessage(e: unknown): string {
 }
 
 export const logger = {
-  info(tagOrMsg?: string, msg?: unknown, ...args: any[]) {
+  info(tagOrMsg?: string, msg?: unknown, ..._args: any[]) {
     if (!tagOrMsg) return;
     if (msg === undefined || msg === null) {
       console.log(`[INFO] ${tagOrMsg}`);
@@ -22,7 +22,7 @@ export const logger = {
     }
   },
 
-  warn(tagOrMsg?: string, msg?: unknown, ...args: any[]) {
+  warn(tagOrMsg?: string, msg?: unknown, ..._args: any[]) {
     if (!tagOrMsg) return;
     if (msg === undefined || msg === null) {
       console.warn(`[WARN] ${tagOrMsg}`);
@@ -33,7 +33,7 @@ export const logger = {
     }
   },
 
-  error(tagOrMsg?: string, msg?: unknown, ...args: any[]) {
+  error(tagOrMsg?: string, msg?: unknown, ..._args: any[]) {
     if (!tagOrMsg) return;
     if (msg === undefined || msg === null) {
       console.error(`[ERROR] ${tagOrMsg}`);
@@ -47,7 +47,7 @@ export const logger = {
     }
   },
 
-  debug(tagOrMsg?: string, msg?: unknown, ...args: any[]) {
+  debug(tagOrMsg?: string, msg?: unknown, ..._args: any[]) {
     if (!tagOrMsg) return;
     if (process.env.LOG_LEVEL === 'debug') {
       if (msg === undefined || msg === null) {
@@ -60,11 +60,11 @@ export const logger = {
     }
   },
 
-  setLevel(level: string) {
+  setLevel(_level: string) {
     // 兼容旧 API
   },
 
-  setLogFile(path: string) {
+  setLogFile(_path: string) {
     // 兼容旧 API
   },
 };

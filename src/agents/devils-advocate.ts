@@ -76,7 +76,7 @@ export class DevilsAdvocateAgent extends BaseAgent<DevilsAdvocateInput, DevilsAd
     );
   }
 
-  private buildReport(data: any, input: DevilsAdvocateInput): DevilsAdvocateReport {
+  private buildReport(data: any, _input: DevilsAdvocateInput): DevilsAdvocateReport {
     return {
       reviewerId: randomUUID(),
       reviewerRole: 'da',

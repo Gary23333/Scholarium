@@ -1,7 +1,6 @@
 // Cartographer Agent — 学术制图师（思维导图发散）
 // 3轮发散策略：广度发散 → 深度挖掘 → 贡献定位
 import { BaseAgent } from './base.ts';
-import type { AgentOptions } from '../types/index.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.ts';
 
@@ -283,7 +282,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     ];
   }
 
-  private getMockSubTopics(parentLabel: string, topic: string): string[] {
+  private getMockSubTopics(parentLabel: string, _topic: string): string[] {
     const map: Record<string, string[]> = {
       'Linear Attention Mechanisms': [
         'Random feature map approximation (Performer)',
@@ -326,7 +325,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     );
   }
 
-  private getMockGaps(topic: string): string[] {
+  private getMockGaps(_topic: string): string[] {
     return [
       'Lack of unified benchmark comparing all efficient attention families under identical conditions',
       'Limited analysis of attention mechanism interaction with layer normalization and residual connections',
@@ -335,7 +334,7 @@ Identify: 1) Research gaps (unexplored areas), 2) Novelty candidates (potential 
     ];
   }
 
-  private getMockNovelty(topic: string): string[] {
+  private getMockNovelty(_topic: string): string[] {
     return [
       'Adaptive attention switching based on input complexity and sequence length',
       'Hardware-software co-design for attention: jointly optimizing algorithm and kernel',

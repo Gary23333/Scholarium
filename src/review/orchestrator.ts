@@ -7,7 +7,7 @@ import type { PerspectiveReviewerAgent } from '../agents/perspective-reviewer.ts
 import type { DevilsAdvocateAgent } from '../agents/devils-advocate.ts';
 import type { EditorialSynthesizerAgent } from '../agents/editorial-synthesizer.ts';
 import type { ScholariumDB } from '../db/database.ts';
-import type { ReviewSession, ReviewReport, EditorialDecision, DevilsAdvocateReport } from '../types/index.ts';
+import type { ReviewSession, ReviewReport, EditorialDecision } from '../types/index.ts';
 import { randomUUID } from 'node:crypto';
 
 export interface ReviewOrchestratorDeps {

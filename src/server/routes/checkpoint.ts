@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ServerContext } from '../context.ts';
-import { json, error } from '../utils/helpers.ts';
+import { json } from '../utils/helpers.ts';
 
 type CheckpointContext = Pick<ServerContext, 'checkpointManager'>;
 

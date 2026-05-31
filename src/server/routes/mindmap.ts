@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
-import type { MindMapNode, CartographerInput } from '../../agents/cartographer.ts';
+import type { CartographerInput } from '../../agents/cartographer.ts';
 import type { ServerContext, MindMapSession } from '../context.ts';
 import { json, error, parseBody, now } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';

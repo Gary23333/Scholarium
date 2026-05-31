@@ -73,7 +73,7 @@ export function registerSocraticRoutes(
       const session = ctx.socraticOrchestrator.getSession(sessionId);
       if (!session) return error(res, 'Session not found', 404);
 
-      const topic = ctx.db.getPaper(session.paperId)?.title ?? '未指定';
+      const _topic = ctx.db.getPaper(session.paperId)?.title ?? '未指定';
       const result = await ctx.socraticOrchestrator.respond(sessionId, '我已经准备好总结我的研究想法了。', true);
       json(res, result);
     } catch (e: unknown) {

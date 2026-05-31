@@ -2,7 +2,7 @@
 import { BaseAgent } from './base.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.ts';
-import type { ResearchBrief, FinerScore, SocraticTurn } from '../types/index.ts';
+import type { ResearchBrief, SocraticTurn } from '../types/index.ts';
 
 export interface RQAgentInput {
   topic: string;

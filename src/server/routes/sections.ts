@@ -3,7 +3,6 @@ import type { Section } from '../../types/index.ts';
 import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
-import { logger } from '../../utils/logger.ts';
 
 type SectionsRouteContext = Pick<ServerContext, 'papers' | 'bible' | 'db' | 'router' | 'persistSection' | 'hasLLMFor'>;
 

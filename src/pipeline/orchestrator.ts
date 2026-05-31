@@ -7,7 +7,6 @@ import type {
   PipelineRun,
   PipelinePhase,
   FixInstructions,
-  BibleEntry,
 } from '../types/index.ts';
 import { resolveStateAfterRound } from '../state/machine.ts';
 import type { PlannerAgent } from '../agents/planner.ts';
@@ -23,7 +22,7 @@ import { runFullAudit } from '../audit/index.ts';
 import { runAntiAI } from '../anti-ai/index.ts';
 import { verifyIntegrity } from '../integrity/index.ts';
 import type { CitationRecord } from '../types/index.ts';
-import type { TaskManager, TaskPhase } from '../task-manager.ts';
+import type { TaskManager } from '../task-manager.ts';
 import { InputGovernance, buildGovernanceContext } from '../models/input-governance.ts';
 import type { LLMRouter } from '../llm/router.ts';
 

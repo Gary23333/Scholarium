@@ -45,7 +45,7 @@ function getFreePort(): Promise<number> {
   });
 }
 
-function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; data: any }> {
+function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; data: unknown }> {
   return new Promise((resolve, reject) => {
     const req = http.request(
       url,
@@ -62,7 +62,7 @@ function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; d
           body += chunk;
         });
         res.on('end', () => {
-          let data: any;
+          let data: unknown;
           try {
             data = JSON.parse(body);
           } catch {

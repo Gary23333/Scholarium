@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ServerContext } from '../context.ts';
-import { json, error, parseBody } from '../utils/helpers.ts';
+import { json, error } from '../utils/helpers.ts';
 import { handleRouteError } from '../middleware/error-handler.ts';
 
 type ReviewContext = Pick<ServerContext, 'reviewOrchestrator' | 'papers' | 'db'>;

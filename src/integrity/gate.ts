@@ -28,7 +28,7 @@ export class IntegrityGate {
   }
 
   async run(input: IntegrityGateInput): Promise<IntegrityGateResult> {
-    const { paperContent, references, gateType, mockMode } = input;
+    const { paperContent, references, gateType, mockMode: _mockMode } = input;
 
     // Phase A: Reference verification
     const phaseA = this.verifyReferences(paperContent, references);
@@ -113,7 +113,7 @@ export class IntegrityGate {
     return { phase: 'A', checks, passed: criticalCount === 0, criticalCount, warningCount: 0 };
   }
 
-  private verifyCitationContext(content: string, refs: Array<{ key: string; bibtex: string }>): IntegrityPhaseResult {
+  private verifyCitationContext(content: string, _refs: Array<{ key: string; bibtex: string }>): IntegrityPhaseResult {
     const checks: VerificationResult[] = [];
     const patterns = [
       { regex: /(首次|首次提出|state-of-the-art|SOTA|最好|最优)/gi, needsCite: true },
@@ -177,7 +177,7 @@ export class IntegrityGate {
     return { phase: 'D', checks, passed: checks.length === 0, criticalCount: 0, warningCount: checks.length };
   }
 
-  private verifyClaims(content: string, refs: Array<{ key: string }>): IntegrityPhaseResult {
+  private verifyClaims(content: string, _refs: Array<{ key: string }>): IntegrityPhaseResult {
     const checks: VerificationResult[] = [];
     const claimPattern =
       /(我们的方法达到了|our method achieves|实验结果表明|experimental results show|我们取得了|we achieve|性能提升|performance improvement)/gi;
@@ -203,10 +203,10 @@ export class IntegrityGate {
   private checkFailureModes(
     content: string,
     phaseA: IntegrityPhaseResult,
-    phaseB: IntegrityPhaseResult,
-    phaseC: IntegrityPhaseResult,
-    phaseD: IntegrityPhaseResult,
-    phaseE: IntegrityPhaseResult,
+    _phaseB: IntegrityPhaseResult,
+    _phaseC: IntegrityPhaseResult,
+    _phaseD: IntegrityPhaseResult,
+    _phaseE: IntegrityPhaseResult,
   ): FailureModeReport {
     const modes: Record<FailureMode, 'pass' | 'suspected' | 'insufficient_evidence'> = {
       implementation_bug: 'pass',

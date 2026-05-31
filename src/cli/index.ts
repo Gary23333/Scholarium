@@ -4,8 +4,7 @@ import { Command } from 'commander';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { createLatexProject, loadProject, writeSectionFile, assembleFullPaper } from '../latex/assembler.ts';
-import { compile, detectEngine } from '../latex/compiler.ts';
-import type { CliCommandResult, FullPaper } from '../types/index.ts';
+import { compile } from '../latex/compiler.ts';
 import { logger } from '../utils/logger.ts';
 
 const program = new Command();
