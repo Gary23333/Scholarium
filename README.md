@@ -3,6 +3,7 @@
 > 23 个 AI Agent 协同工作，从研究问题到 LaTeX 论文，全流程自动化。
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Gary23333/Scholarium/actions/workflows/ci.yml/badge.svg)](https://github.com/Gary23333/Scholarium/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Version](https://img.shields.io/badge/version-2.0.1-green)](package.json)
 
@@ -221,6 +222,19 @@ npm run format:check   # Prettier 检查
 | 🧪 **Vitest 测试套件** | 88 个测试用例，覆盖核心逻辑 |
 | ⚙️ **GitHub Actions CI/CD** | 自动化构建、检查与测试流水线 |
 | 📐 **TypeScript 严格模式** | 启用 strict 模式 + Node.js 类型定义 |
+
+---
+
+## 🤝 Community & Governance
+
+| | |
+|---|---|
+| 📋 [Contributing](CONTRIBUTING.md) | 开发环境搭建、分支规范、提交规范、PR 流程 |
+| 🔒 [Security](SECURITY.md) | 漏洞报告方式、支持版本、安全响应流程 |
+| 📜 [Code of Conduct](CODE_OF_CONDUCT.md) | 社区行为准则 (Contributor Covenant v2.1) |
+| 🗺️ [Roadmap](ROADMAP.md) | 短期/中期/长期开发计划 |
+| 📝 [Changelog](CHANGELOG.md) | 版本更新记录 |
+| 🪲 [Issue Templates](https://github.com/Gary23333/Scholarium/issues/new/choose) | Bug Report / Feature Request / Documentation Issue |
 
 ---
 

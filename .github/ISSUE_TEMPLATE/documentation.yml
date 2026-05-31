@@ -1,0 +1,36 @@
+name: Documentation Issue
+description: Report missing, incorrect, or unclear documentation
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve Scholarium's documentation. Please describe the issue.
+
+  - type: dropdown
+    id: location
+    attributes:
+      label: Documentation Location
+      options:
+        - README.md
+        - CONTRIBUTING.md
+        - API documentation
+        - Code comments / JSDoc
+        - Inline help / CLI help
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue Description
+      description: What is wrong or missing? Be as specific as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
