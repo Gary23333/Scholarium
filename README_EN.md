@@ -137,14 +137,21 @@ Scholarium/
 │   ├── anti-ai/        # 6-dim AI detection + rewriting
 │   ├── audit/          # 18-dim quality audit
 │   ├── bible/          # Paper fact Bible
+│   ├── cli/            # CLI tool (scholarium command)
+│   ├── config/         # Config loading & defaults
+│   ├── db/             # Database layer
 │   ├── embedding/      # Embedding engine
 │   ├── figures/        # Chart generation
+│   ├── integrity/      # Integrity check gate
+│   ├── latex/          # LaTeX assembly & compilation
 │   ├── librarian/      # Citation management
 │   ├── llm/            # LLM Client + Router
 │   ├── mindmap/        # MindMap service
 │   ├── models/         # Input governance
 │   ├── pipeline/       # Agent orchestration
 │   ├── review/         # 7-agent peer review
+│   ├── state/          # State machine
+│   ├── storage/        # JSON file persistence
 │   ├── types/          # Shared type system
 │   ├── utils/          # Logger + rate limiter
 │   ├── __tests__/      # Test suites (vitest)
