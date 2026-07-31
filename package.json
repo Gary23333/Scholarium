@@ -21,6 +21,7 @@
     "test:paper": "node --experimental-strip-types --no-warnings src/test-paper-generation.ts",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:e2e-ui": "playwright test",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/ --ext .ts",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.19.19",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",

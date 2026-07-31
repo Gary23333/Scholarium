@@ -262,7 +262,9 @@ export function PapersPage() {
   async function loadPapers() {
     try {
       const res = await fetch('/api/papers');
-      const list: Paper[] = await res.json();
+      const data = await res.json();
+      // /api/papers 返回 { papers, total }，兼容纯数组
+      const list: Paper[] = Array.isArray(data) ? data : (data?.papers ?? []);
       setPapers(list);
       const savedId = typeof window !== 'undefined' ? localStorage.getItem(SELECTED_PAPER_KEY) : null;
       if (savedId && list.some((p) => p.id === savedId)) {
@@ -664,7 +666,8 @@ export function PapersPage() {
     if (!segmentSel) return;
     function onDocPointerDown(e: PointerEvent) {
       const target = e.target as HTMLElement;
-      if (target.closest('[data-segment-float]')) return;
+      // 浮动按钮与局部重写弹窗内部都不算「点击空白处」
+      if (target.closest('[data-segment-float], [data-testid="segment-modal"]')) return;
       setSegmentSel(null);
     }
     document.addEventListener('pointerdown', onDocPointerDown);
@@ -1277,6 +1280,7 @@ export function PapersPage() {
             {detail.sections && detail.sections.some((s) => s.contentTex) && (
               <>
                 <button
+                  data-testid="view-fulltext"
                   onClick={handleViewFulltext}
                   disabled={loadingFulltext}
                   className="glass-btn-secondary h-8 px-3 text-xs inline-flex items-center gap-1"
@@ -1285,6 +1289,7 @@ export function PapersPage() {
                   查看原文
                 </button>
                 <button
+                  data-testid="smart-edit-open"
                   onClick={() => setShowSmartEdit(true)}
                   className="glass-btn-secondary h-8 px-3 text-xs inline-flex items-center gap-1"
                 >
@@ -1377,6 +1382,7 @@ export function PapersPage() {
       {/* 全文预览模态框 — 支持分段查看 */}
       {fulltext && (
         <div
+          data-testid="fulltext-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
           onClick={() => setFulltext(null)}
@@ -1444,6 +1450,7 @@ export function PapersPage() {
                     .map((s) => (
                       <button
                         key={s.id}
+                        data-testid={`fulltext-toc-${s.id}`}
                         onClick={() => setFulltextSection(s.id)}
                         className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
                           fulltextSection === s.id
@@ -1475,6 +1482,7 @@ export function PapersPage() {
                             {s.sectionNumber}. {s.title}
                           </h3>
                           <pre
+                            data-testid="fulltext-section-pre"
                             className="text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed"
                             style={{ tabSize: 2 }}
                             onMouseUp={(e) => handleFulltextSelection(e, s.id)}
@@ -1598,6 +1606,7 @@ export function PapersPage() {
           style={{ top: (segmentSel.rect?.bottom ?? 0) + 4, left: Math.max(8, segmentSel.rect?.left ?? 0) }}
         >
           <button
+            data-testid="segment-float-btn"
             onClick={() => setSegmentModal(true)}
             className="inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs text-amber-300 transition-all hover:opacity-90 shadow-lg"
             style={{
@@ -1614,6 +1623,7 @@ export function PapersPage() {
       {/* ── 片段局部重写：修改意见弹窗 ── */}
       {segmentModal && segmentSel && (
         <div
+          data-testid="segment-modal"
           className="fixed inset-0 z-[70] flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
           onClick={() => setSegmentModal(false)}
@@ -1644,6 +1654,7 @@ export function PapersPage() {
             <div>
               <label className="text-xs text-slate-400 block mb-1">修改意见</label>
               <textarea
+                data-testid="segment-note"
                 value={segmentNote}
                 onChange={(e) => setSegmentNote(e.target.value)}
                 placeholder="例如：这段论证逻辑不清晰，请强化证据链，去掉 AI 味"
@@ -1656,6 +1667,7 @@ export function PapersPage() {
                 取消
               </button>
               <button
+                data-testid="segment-confirm"
                 onClick={handleSegmentRevise}
                 disabled={segmentRevising || !segmentNote.trim()}
                 className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
@@ -1672,6 +1684,7 @@ export function PapersPage() {
       {/* ── 智能编辑 Agent 弹窗 ── */}
       {showSmartEdit && selectedId && (
         <div
+          data-testid="smart-edit-modal"
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
           onClick={() => setShowSmartEdit(false)}
@@ -2540,6 +2553,7 @@ export function PapersPage() {
                           {editingContent ? (
                             <>
                               <button
+                                data-testid="save-content"
                                 onClick={handleSaveContent}
                                 disabled={savingContent}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 transition-colors"
@@ -2598,6 +2612,7 @@ export function PapersPage() {
                                 修改
                               </button>
                               <button
+                                data-testid="edit-content-btn"
                                 onClick={handleStartEditContent}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-blue-400 hover:bg-blue-500/10 transition-colors"
                               >
@@ -2623,6 +2638,7 @@ export function PapersPage() {
                                 优化关联章节
                               </button>
                               <button
+                                data-testid="auto-revise-btn"
                                 onClick={() => handleAutoReviseSection(contentSectionId!)}
                                 disabled={autoRevising}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-fuchsia-400 hover:bg-fuchsia-500/10 disabled:opacity-50 transition-colors"
@@ -2640,6 +2656,7 @@ export function PapersPage() {
                       </div>
                       {editingContent ? (
                         <textarea
+                          data-testid="edit-textarea"
                           value={editedContentTex}
                           onChange={(e) => setEditedContentTex(e.target.value)}
                           onMouseUp={handleEditTextareaSelect}

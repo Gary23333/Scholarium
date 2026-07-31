@@ -20,19 +20,35 @@ interface Stats {
  * 数据来源：后端 /api/papers 和 /api/mindmap/sessions
  */
 export function Dashboard() {
-  const [stats, setStats] = useState<Stats>({ papers: 0, mindmaps: 0, citations: 0, bibleEntries: 0, socraticSessions: 0, reviewReports: 0 });
-  const [recentPapers, setRecentPapers] = useState<Array<{ id: string; title: string; status: string; sections: number }>>([]);
+  const [stats, setStats] = useState<Stats>({
+    papers: 0,
+    mindmaps: 0,
+    citations: 0,
+    bibleEntries: 0,
+    socraticSessions: 0,
+    reviewReports: 0,
+  });
+  const [recentPapers, setRecentPapers] = useState<
+    Array<{ id: string; title: string; status: string; sections: number }>
+  >([]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
         const [papersRes, mmRes, statsRes] = await Promise.all([
-          fetch('/api/papers').then((r) => r.json()).catch(() => []),
-          fetch('/api/mindmap/sessions').then((r) => r.json()).catch(() => []),
-          fetch('/api/stats').then((r) => r.json()).catch(() => null),
+          fetch('/api/papers')
+            .then((r) => r.json())
+            .catch(() => []),
+          fetch('/api/mindmap/sessions')
+            .then((r) => r.json())
+            .catch(() => []),
+          fetch('/api/stats')
+            .then((r) => r.json())
+            .catch(() => null),
         ]);
-        setRecentPapers(papersRes);
+        // /api/papers 返回 { papers, total }，兼容纯数组
+        setRecentPapers(Array.isArray(papersRes) ? papersRes : (papersRes?.papers ?? []));
         setStats({
           papers: statsRes?.papers ?? papersRes.length,
           mindmaps: statsRes?.mindmaps ?? mmRes.length,
@@ -49,7 +65,7 @@ export function Dashboard() {
   async function handleDeletePaper(id: string) {
     try {
       await fetch(`/api/papers/${id}`, { method: 'DELETE' });
-      setRecentPapers((prev) => prev.filter(p => p.id !== id));
+      setRecentPapers((prev) => prev.filter((p) => p.id !== id));
       setStats((prev) => ({ ...prev, papers: prev.papers - 1 }));
     } catch {}
     setConfirmDelete(null);
@@ -106,45 +122,43 @@ export function Dashboard() {
           </div>
         ) : (
           <div className="space-y-2">
-                {recentPapers.map((p) => (
-                  <div
-                    key={p.id}
-                    className="group flex items-center justify-between py-2 px-3 rounded-lg transition-colors hover:bg-white/[0.04]"
+            {recentPapers.map((p) => (
+              <div
+                key={p.id}
+                className="group flex items-center justify-between py-2 px-3 rounded-lg transition-colors hover:bg-white/[0.04]"
+              >
+                <div>
+                  <span className="text-sm font-medium text-slate-200">{p.title}</span>
+                  <span className="ml-2 text-xs text-slate-500">{p.sections} 章节</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{
+                      background:
+                        p.status === 'completed'
+                          ? 'rgba(16,185,129,0.15)'
+                          : p.status === 'writing'
+                            ? 'rgba(59,130,246,0.15)'
+                            : 'rgba(100,116,139,0.15)',
+                      color: p.status === 'completed' ? '#34d399' : p.status === 'writing' ? '#60a5fa' : '#94a3b8',
+                    }}
                   >
-                    <div>
-                      <span className="text-sm font-medium text-slate-200">{p.title}</span>
-                      <span className="ml-2 text-xs text-slate-500">{p.sections} 章节</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full"
-                        style={{
-                          background:
-                            p.status === 'completed'
-                              ? 'rgba(16,185,129,0.15)'
-                              : p.status === 'writing'
-                                ? 'rgba(59,130,246,0.15)'
-                                : 'rgba(100,116,139,0.15)',
-                          color:
-                            p.status === 'completed'
-                              ? '#34d399'
-                              : p.status === 'writing'
-                                ? '#60a5fa'
-                                : '#94a3b8',
-                        }}
-                      >
-                        {p.status}
-                      </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(p.id); }}
-                        className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                        title="删除"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                    {p.status}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(p.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    title="删除"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -161,13 +175,16 @@ export function Dashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.15)' }}>
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(239,68,68,0.15)' }}
+              >
                 <Trash2 className="h-5 w-5 text-red-400" />
               </div>
               <div>
                 <div className="text-sm text-slate-200 font-medium">确认删除</div>
                 <div className="text-xs text-slate-400 mt-1">
-                  将永久删除「{recentPapers.find(p => p.id === confirmDelete)?.title}」及其所有内容，此操作不可撤销。
+                  将永久删除「{recentPapers.find((p) => p.id === confirmDelete)?.title}」及其所有内容，此操作不可撤销。
                 </div>
               </div>
             </div>

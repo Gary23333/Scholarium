@@ -174,6 +174,7 @@ npm run serve          # 启动开发服务器（API + 前端）
 npm run typecheck      # TypeScript 类型检查
 npm run test           # 运行 vitest 测试
 npm run test:mock      # Mock 测试（无需网络）
+npm run test:e2e-ui    # 真实 Chrome 端到端测试（需已构建前端，npm run build:frontend）
 npm run lint           # ESLint 检查
 npm run lint:fix       # ESLint 自动修复
 npm run format         # Prettier 格式化

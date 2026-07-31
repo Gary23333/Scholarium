@@ -162,6 +162,7 @@ export function SmartEditPanel({ paperId, onApplied, onClose }: SmartEditPanelPr
       <div>
         <label className="text-xs text-slate-400 block mb-1">修改需求</label>
         <textarea
+          data-testid="smart-edit-request"
           value={request}
           onChange={(e) => setRequest(e.target.value)}
           placeholder="例如：全文统一术语「深度学习模型」不要出现「神经网络模型」；修正引言里对基线方法的不准确描述"
@@ -172,6 +173,7 @@ export function SmartEditPanel({ paperId, onApplied, onClose }: SmartEditPanelPr
       {/* 三步按钮 */}
       <div className="flex flex-wrap items-center gap-2">
         <button
+          data-testid="smart-plan"
           onClick={runPlan}
           disabled={busy || !request.trim()}
           className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs text-emerald-300 disabled:opacity-50 transition-all hover:opacity-90"
@@ -185,6 +187,7 @@ export function SmartEditPanel({ paperId, onApplied, onClose }: SmartEditPanelPr
           ① 分析范围
         </button>
         <button
+          data-testid="smart-execute"
           onClick={runExecute}
           disabled={busy || phase !== 'planned' || !plan?.edits.length}
           className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs text-amber-300 disabled:opacity-40 transition-all hover:opacity-90"
@@ -194,6 +197,7 @@ export function SmartEditPanel({ paperId, onApplied, onClose }: SmartEditPanelPr
           执行修改
         </button>
         <button
+          data-testid="smart-apply"
           onClick={runApply}
           disabled={busy || phase !== 'done' || !report?.results.some((r) => r.success)}
           className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs text-blue-300 disabled:opacity-40 transition-all hover:opacity-90"

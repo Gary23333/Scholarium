@@ -18,6 +18,10 @@ data/
 *.log
 logs/
 
+# Playwright
+test-results/
+playwright-report/
+
 # IDE
 .vscode/
 .idea/
