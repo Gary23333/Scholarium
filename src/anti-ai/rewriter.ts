@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.ts';
 
 // Based on Tsinghua PDF guidelines: "删除高度概括和冗余的词句"
 // Replace vague AI filler phrases with more direct academic expressions
-const REPLACEMENTS: Array<{ pattern: RegExp; replacement: string }> = [
+export const REPLACEMENTS: Array<{ pattern: RegExp; replacement: string }> = [
   { pattern: /\bfurthermore\b/gi, replacement: 'in addition' },
   { pattern: /\bmoreover\b/gi, replacement: 'besides' },
   { pattern: /\bnotably\b/gi, replacement: 'particularly' },

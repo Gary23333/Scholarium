@@ -193,6 +193,10 @@ npm run format:check   # Prettier 检查
 | `POST /api/papers/:id/audit` | 批量 18 维审计 |
 | `POST /api/papers/:id/rewrite` | 批量章节重写 |
 | `POST /api/papers/:id/directive` | 实时注入写作指令 |
+| `POST /api/papers/:id/sections/:sid/revise-passage` | 划段局部重写（选中一段 → 只重写该段） |
+| `POST /api/papers/:id/sections/:sid/auto-revise` | 单章评审驱动自动定向修订 |
+| `POST /api/papers/:id/auto-revise` | 全篇评审驱动自动定向修订 |
+| `POST /api/papers/:id/smart-edit` | 智能编辑 Agent（SSE：分析 → 局部重写 → 校验 → 确认落盘） |
 | `POST /api/socratic/start` | 启动苏格拉底引导 |
 | `POST /api/review/:id/start` | 启动同行评审 |
 | `POST /api/citations/search` | 多源文献搜索 |

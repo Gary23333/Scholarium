@@ -7,6 +7,7 @@ import type { ComposerAgent } from '../agents/composer.ts';
 import type { WriterAgent } from '../agents/writer.ts';
 import type { ObserverAgent } from '../agents/observer.ts';
 import type { NormalizerAgent } from '../agents/normalizer.ts';
+import type { ReviserAgent } from '../agents/reviser.ts';
 import type { SocraticMentorAgent } from '../agents/socratic-mentor.ts';
 import type { ResearchQuestionAgent } from '../agents/research-question.ts';
 import type { MethodologyAgent } from '../agents/methodology.ts';
@@ -78,6 +79,7 @@ export interface ServerContext {
   writer: WriterAgent;
   observer: ObserverAgent;
   normalizer: NormalizerAgent;
+  reviser: ReviserAgent;
   socraticMentor: SocraticMentorAgent;
   researchQuestion: ResearchQuestionAgent;
   methodology: MethodologyAgent;

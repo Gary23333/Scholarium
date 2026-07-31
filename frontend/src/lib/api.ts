@@ -1,6 +1,11 @@
 import type {
-  BackendConfigResponse, ModelRoute, ModelFallback, TestResult,
-  SocraticStartResponse, SocraticRespondResponse, SocraticSummaryResponse,
+  BackendConfigResponse,
+  ModelRoute,
+  ModelFallback,
+  TestResult,
+  SocraticStartResponse,
+  SocraticRespondResponse,
+  SocraticSummaryResponse,
 } from './types';
 
 export async function fetchLLMConfig(): Promise<BackendConfigResponse> {
@@ -13,7 +18,12 @@ export async function saveLLMConfig(body: {
   providers: Record<string, { apiKey?: string; baseUrl?: string; models?: string[] }>;
   models: Record<string, ModelRoute>;
   fallbacks?: Record<string, ModelFallback>;
-}): Promise<{ ok: boolean; config?: unknown; validation?: { ok: boolean; errors: string[]; warnings: string[] }; error?: string }> {
+}): Promise<{
+  ok: boolean;
+  config?: unknown;
+  validation?: { ok: boolean; errors: string[]; warnings: string[] };
+  error?: string;
+}> {
   const res = await fetch('/api/llm/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -42,7 +52,10 @@ export async function fetchAvailableModels(): Promise<string[]> {
 }
 
 /** 从 Provider 的服务端 API 拉取可用模型列表 */
-export async function fetchProviderModels(baseUrl: string, apiKey: string): Promise<{ ok: boolean; models?: string[]; error?: string }> {
+export async function fetchProviderModels(
+  baseUrl: string,
+  apiKey: string,
+): Promise<{ ok: boolean; models?: string[]; error?: string }> {
   const res = await fetch('/api/llm/provider-models', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -52,7 +65,12 @@ export async function fetchProviderModels(baseUrl: string, apiKey: string): Prom
 }
 
 /** 翻译文本 */
-export async function translateText(text: string, targetLang: string, model: string, sourceLang?: string): Promise<{ ok: boolean; translated?: string; error?: string }> {
+export async function translateText(
+  text: string,
+  targetLang: string,
+  model: string,
+  sourceLang?: string,
+): Promise<{ ok: boolean; translated?: string; error?: string }> {
   const res = await fetch('/api/llm/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -62,7 +80,11 @@ export async function translateText(text: string, targetLang: string, model: str
 }
 
 /** 从 URL 生成引用格式 */
-export async function generateCitationFromUrl(url: string, model: string, format?: string): Promise<{ ok: boolean; citation?: string; title?: string; error?: string }> {
+export async function generateCitationFromUrl(
+  url: string,
+  model: string,
+  format?: string,
+): Promise<{ ok: boolean; citation?: string; title?: string; error?: string }> {
   const res = await fetch('/api/citations/from-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -72,7 +94,10 @@ export async function generateCitationFromUrl(url: string, model: string, format
 }
 
 /** LLM 生成引用模板 */
-export async function generateCitationTemplate(userInput: string, model: string): Promise<{ ok: boolean; template?: CitationTemplate; error?: string }> {
+export async function generateCitationTemplate(
+  userInput: string,
+  model: string,
+): Promise<{ ok: boolean; template?: CitationTemplate; error?: string }> {
   const res = await fetch('/api/citations/generate-template', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -88,7 +113,9 @@ export async function fetchCitationTemplates(): Promise<{ templates: CitationTem
 }
 
 /** 保存引用模板 */
-export async function saveCitationTemplates(templates: CitationTemplate[]): Promise<{ ok: boolean; templates?: CitationTemplate[] }> {
+export async function saveCitationTemplates(
+  templates: CitationTemplate[],
+): Promise<{ ok: boolean; templates?: CitationTemplate[] }> {
   const res = await fetch('/api/citations/templates', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -126,7 +153,11 @@ export async function startSocraticSession(paperId: string, mode?: string): Prom
   return res.json();
 }
 
-export async function sendSocraticMessage(sessionId: string, message: string, skipCommitment?: boolean): Promise<SocraticRespondResponse> {
+export async function sendSocraticMessage(
+  sessionId: string,
+  message: string,
+  skipCommitment?: boolean,
+): Promise<SocraticRespondResponse> {
   const res = await fetch(`/api/socratic/${sessionId}/respond`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -148,11 +179,36 @@ export async function completeSocraticSession(sessionId: string): Promise<Socrat
   return res.json();
 }
 
-export async function submitSocraticCommitment(sessionId: string, commitment: string): Promise<SocraticRespondResponse> {
+export async function submitSocraticCommitment(
+  sessionId: string,
+  commitment: string,
+): Promise<SocraticRespondResponse> {
   const res = await fetch(`/api/socratic/${sessionId}/commitment`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ commitment }),
   });
   return res.json();
+}
+
+export async function revisePassage(
+  paperId: string,
+  sectionId: string,
+  body: { passage: string; note: string; before?: string; after?: string },
+): Promise<{
+  revised: string;
+  warnings?: string[];
+  mockMode?: boolean;
+  protectedViolated?: boolean;
+  taskId?: string;
+  error?: string;
+}> {
+  const res = await fetch(`/api/papers/${paperId}/sections/${sectionId}/revise-passage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
 }

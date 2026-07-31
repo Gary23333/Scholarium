@@ -12,6 +12,7 @@ import { ComposerAgent } from './agents/composer.ts';
 import { WriterAgent } from './agents/writer.ts';
 import { ObserverAgent } from './agents/observer.ts';
 import { NormalizerAgent } from './agents/normalizer.ts';
+import { ReviserAgent } from './agents/reviser.ts';
 import { SocraticMentorAgent } from './agents/socratic-mentor.ts';
 import { ResearchQuestionAgent } from './agents/research-question.ts';
 import { MethodologyAgent } from './agents/methodology.ts';
@@ -39,6 +40,7 @@ import { registerLlmRoutes } from './server/routes/llm.ts';
 import { registerMindmapRoutes } from './server/routes/mindmap.ts';
 import { registerPapersRoutes } from './server/routes/papers.ts';
 import { registerSectionsRoutes } from './server/routes/sections.ts';
+import { registerSmartEditRoutes } from './server/routes/smart-edit.ts';
 import { registerCitationRoutes } from './server/routes/citations.ts';
 import { registerBibleRoutes } from './server/routes/bible.ts';
 import { registerReviewRoutes } from './server/routes/review.ts';
@@ -100,6 +102,7 @@ export class ScholariumAPI {
     const writer = new WriterAgent(router);
     const observer = new ObserverAgent(router);
     const normalizer = new NormalizerAgent(router);
+    const reviser = new ReviserAgent(router);
     const socraticMentor = new SocraticMentorAgent(router);
     const researchQuestion = new ResearchQuestionAgent(router);
     const methodology = new MethodologyAgent(router);
@@ -148,6 +151,7 @@ export class ScholariumAPI {
       writer,
       observer,
       normalizer,
+      reviser,
       socraticMentor,
       researchQuestion,
       methodology,
@@ -263,6 +267,7 @@ export class ScholariumAPI {
     registerMindmapRoutes(this.ctx, reg);
     registerPapersRoutes(this.ctx, reg);
     registerSectionsRoutes(this.ctx, reg);
+    registerSmartEditRoutes(this.ctx, reg);
     registerCitationRoutes(this.ctx, reg);
     registerBibleRoutes(this.ctx, reg);
     registerReviewRoutes(this.ctx, reg);

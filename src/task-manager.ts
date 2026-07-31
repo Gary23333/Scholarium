@@ -13,6 +13,8 @@ export type TaskType =
   | 'diverge'
   | 'rewrite'
   | 'optimize-related'
+  | 'auto-revise'
+  | 'smart-edit'
   | 'other';
 
 export interface TaskPhase {

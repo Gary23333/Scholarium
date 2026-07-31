@@ -1,11 +1,37 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
-  Plus, FileText, Play, Loader2, ChevronRight, ChevronDown,
-  FileCheck, AlertCircle, Clock, BookOpen, Edit3, Layers,
-  Eye, Download, X, Trash2, List, AlignLeft,
-  ArrowUp, ArrowDown, Save, ExternalLink, Bookmark, Search,
-  Sparkles, Compass, Shield, Users,
+  Plus,
+  FileText,
+  Play,
+  Loader2,
+  ChevronRight,
+  ChevronDown,
+  FileCheck,
+  AlertCircle,
+  Clock,
+  BookOpen,
+  Edit3,
+  Layers,
+  Eye,
+  Download,
+  X,
+  Trash2,
+  List,
+  AlignLeft,
+  ArrowUp,
+  ArrowDown,
+  Save,
+  ExternalLink,
+  Bookmark,
+  Search,
+  Sparkles,
+  Compass,
+  Shield,
+  Users,
 } from 'lucide-react';
+import { revisePassage } from '../lib/api';
+import { spliceSegment, offsetInRoot } from '../lib/segments';
+import { SmartEditPanel } from '../components/SmartEditPanel';
 
 /* ───────────────────────────────────────────
    类型定义
@@ -149,6 +175,30 @@ export function PapersPage() {
   const [editingContent, setEditingContent] = useState(false);
   const [editedContentTex, setEditedContentTex] = useState('');
   const [savingContent, setSavingContent] = useState(false);
+
+  // ── 片段局部重写状态 ──
+  const [segmentSel, setSegmentSel] = useState<{
+    sectionId: string;
+    text: string;
+    start: number;
+    end: number;
+    rect?: DOMRect;
+  } | null>(null);
+  const [segmentModal, setSegmentModal] = useState(false);
+  const [segmentNote, setSegmentNote] = useState('');
+  const [segmentRevising, setSegmentRevising] = useState(false);
+  const [segmentTarget, setSegmentTarget] = useState<'fulltext' | 'edit'>('fulltext');
+
+  // ── 自动定向修订状态 ──
+  const [autoRevising, setAutoRevising] = useState(false);
+  const [autoReviseResult, setAutoReviseResult] = useState<{
+    sectionId: string;
+    adopted: number;
+    rejected: number;
+  } | null>(null);
+
+  // ── 智能编辑 Agent 弹窗 ──
+  const [showSmartEdit, setShowSmartEdit] = useState(false);
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
   const [optimizeTargetIds, setOptimizeTargetIds] = useState<string[]>([]);
   const [optimizing, setOptimizing] = useState(false);
@@ -174,8 +224,8 @@ export function PapersPage() {
   function openStatus(sectionId: string) {
     setStatusLoading(true);
     fetch(`/api/papers/${selectedId}/sections/${sectionId}/status`)
-      .then(r => r.json())
-      .then(data => setStatusModal({ sectionId, data }))
+      .then((r) => r.json())
+      .then((data) => setStatusModal({ sectionId, data }))
       .catch(() => alert('获取状态失败'))
       .finally(() => setStatusLoading(false));
   }
@@ -183,8 +233,8 @@ export function PapersPage() {
   function openAuditReport(sectionId: string) {
     setAuditReportLoading(true);
     fetch(`/api/papers/${selectedId}/sections/${sectionId}/audit-report`)
-      .then(r => r.json())
-      .then(data => setAuditReportModal({ sectionId, data }))
+      .then((r) => r.json())
+      .then((data) => setAuditReportModal({ sectionId, data }))
       .catch(() => alert('获取审计报告失败'))
       .finally(() => setAuditReportLoading(false));
   }
@@ -215,22 +265,28 @@ export function PapersPage() {
       const list: Paper[] = await res.json();
       setPapers(list);
       const savedId = typeof window !== 'undefined' ? localStorage.getItem(SELECTED_PAPER_KEY) : null;
-      if (savedId && list.some(p => p.id === savedId)) {
+      if (savedId && list.some((p) => p.id === savedId)) {
         setSelectedId(savedId);
       } else if (!selectedId && list.length > 0) {
         setSelectedId(list[0].id);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function loadDetail(id: string) {
     try {
       const res = await fetch(`/api/papers/${id}`);
       setDetail(await res.json());
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
-  useEffect(() => { loadPapers(); }, []);
+  useEffect(() => {
+    loadPapers();
+  }, []);
   useEffect(() => {
     if (selectedId) {
       loadDetail(selectedId);
@@ -268,10 +324,15 @@ export function PapersPage() {
       });
       const data = await res.json();
       setPapers((prev) => [...prev, { id: data.paperId, title: newTitle, status: 'draft', sections: 0 }]);
-      setNewTitle(''); setNewResearchTopic(''); setNewTargetJournal(''); setNewContributionGaps('');
+      setNewTitle('');
+      setNewResearchTopic('');
+      setNewTargetJournal('');
+      setNewContributionGaps('');
       setShowCreate(false);
       setSelectedId(data.paperId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setCreating(false);
   }
 
@@ -285,9 +346,11 @@ export function PapersPage() {
         body: JSON.stringify({}),
       });
       const data = await res.json();
-      setDetail((prev) => prev ? { ...prev, outline: data.outline, status: 'planned' } : prev);
+      setDetail((prev) => (prev ? { ...prev, outline: data.outline, status: 'planned' } : prev));
       loadPapers();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setPlanning(false);
   }
 
@@ -303,7 +366,9 @@ export function PapersPage() {
         body: JSON.stringify({ sectionIndex: idx }),
       });
       await loadDetail(selectedId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setWritingSectionId(null);
   }
 
@@ -337,7 +402,9 @@ export function PapersPage() {
       } else {
         alert(`完整性门控未通过：\n${data.criticalIssues?.join('\n') ?? '未知问题'}`);
       }
-    } catch { alert('完整性门控执行失败'); }
+    } catch {
+      alert('完整性门控执行失败');
+    }
   }
 
   async function handleStartReview() {
@@ -350,33 +417,41 @@ export function PapersPage() {
       } else {
         alert(`评审完成！决策：${data.editorialDecision?.decision ?? '未知'}`);
       }
-    } catch { alert('评审启动失败'); }
+    } catch {
+      alert('评审启动失败');
+    }
   }
 
   async function handleViewFulltext() {
     if (!selectedId || !detail?.sections) return;
     setLoadingFulltext(true);
     try {
-      const sorted = (detail.sections || []).filter(s => s.contentTex).sort((a, b) => a.sectionNumber - b.sectionNumber);
-      const fullContent = sorted.map(s => `% ${s.title}\n${s.contentTex}`).join('\n\n');
+      const sorted = (detail.sections || [])
+        .filter((s) => s.contentTex)
+        .sort((a, b) => a.sectionNumber - b.sectionNumber);
+      const fullContent = sorted.map((s) => `% ${s.title}\n${s.contentTex}`).join('\n\n');
       setFulltext({ format: 'latex', content: fullContent, title: detail.title });
       setFulltextSection('all');
       setFulltextViewMode('segmented');
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoadingFulltext(false);
   }
 
   async function handleDelete(id: string) {
     try {
       await fetch(`/api/papers/${id}`, { method: 'DELETE' });
-      setPapers((prev) => prev.filter(p => p.id !== id));
+      setPapers((prev) => prev.filter((p) => p.id !== id));
       if (selectedId === id) {
         setSelectedId(null);
         setDetail(null);
         localStorage.removeItem(SELECTED_PAPER_KEY);
       }
       setDeleteConfirm(null);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleExportMd() {
@@ -391,7 +466,7 @@ export function PapersPage() {
 
   // ── 大纲 CRUD ──
   async function handleEditSection(sectionId: string) {
-    const sec = detail?.outline?.sections.find(s => s.id === sectionId);
+    const sec = detail?.outline?.sections.find((s) => s.id === sectionId);
     if (!sec) return;
     setEditTitle(sec.title);
     setEditCoreArg(sec.coreArgument);
@@ -408,7 +483,9 @@ export function PapersPage() {
       });
       setEditingSection(null);
       await loadDetail(selectedId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleDeleteSection(sectionId: string) {
@@ -416,18 +493,20 @@ export function PapersPage() {
     try {
       await fetch(`/api/papers/${selectedId}/outline/sections/${sectionId}`, { method: 'DELETE' });
       await loadDetail(selectedId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setDeleteSectionConfirm(null);
   }
 
   async function handleMoveSection(sectionId: string, direction: 'up' | 'down') {
     if (!selectedId || !detail?.outline) return;
     const sections = detail.outline.sections;
-    const idx = sections.findIndex(s => s.id === sectionId);
+    const idx = sections.findIndex((s) => s.id === sectionId);
     if (idx < 0) return;
     const newIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (newIdx < 0 || newIdx >= sections.length) return;
-    const ids = sections.map(s => s.id);
+    const ids = sections.map((s) => s.id);
     [ids[idx], ids[newIdx]] = [ids[newIdx], ids[idx]];
     try {
       await fetch(`/api/papers/${selectedId}/outline/reorder`, {
@@ -436,7 +515,9 @@ export function PapersPage() {
         body: JSON.stringify({ orderedIds: ids }),
       });
       await loadDetail(selectedId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleAddSection() {
@@ -455,9 +536,14 @@ export function PapersPage() {
         }),
       });
       setShowAddSection(false);
-      setAddSecId(''); setAddSecTitle(''); setAddSecCoreArg(''); setAddSecParent('');
+      setAddSecId('');
+      setAddSecTitle('');
+      setAddSecCoreArg('');
+      setAddSecParent('');
       await loadDetail(selectedId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // ── Section Rewrite ──
@@ -478,10 +564,179 @@ export function PapersPage() {
       if (data.section) {
         await loadDetail(selectedId);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setRewriting(false);
     setRewriteModal(null);
-    setRewriteDirection(''); setRewriteRequirements(''); setRewriteGivenContent('');
+    setRewriteDirection('');
+    setRewriteRequirements('');
+    setRewriteGivenContent('');
+  }
+
+  // ── 片段局部重写：选区捕获 ──
+  function handleFulltextSelection(
+    e: React.MouseEvent<HTMLPreElement> | React.KeyboardEvent<HTMLPreElement>,
+    sectionId: string,
+  ) {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const pre = e.currentTarget;
+    if (!pre.contains(range.commonAncestorContainer)) return;
+    const start = offsetInRoot(pre, range.startContainer, range.startOffset);
+    const end = offsetInRoot(pre, range.endContainer, range.endOffset);
+    const text = (pre.textContent ?? '').slice(start, end).trim();
+    if (text.length < 4) return;
+    setSegmentSel({ sectionId, text, start, end, rect: range.getBoundingClientRect() });
+    setSegmentTarget('fulltext');
+  }
+
+  function handleEditTextareaSelect(e: React.SyntheticEvent<HTMLTextAreaElement>) {
+    const ta = e.currentTarget;
+    if (ta.selectionEnd <= ta.selectionStart) {
+      if (segmentSel?.sectionId === contentSectionId && segmentTarget === 'edit') setSegmentSel(null);
+      return;
+    }
+    if (!contentSectionId) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const text = editedContentTex.slice(start, end).trim();
+    if (text.length < 4) return;
+    const r = ta.getBoundingClientRect();
+    const rect = {
+      top: r.bottom - 36,
+      bottom: r.bottom - 4,
+      left: Math.max(r.left, r.right - 170),
+      right: r.right - 4,
+      width: 166,
+      height: 32,
+    } as DOMRect;
+    setSegmentSel({ sectionId: contentSectionId, text, start, end, rect });
+    setSegmentTarget('edit');
+  }
+
+  // ── 片段局部重写：执行 + 拼接 ──
+  async function handleSegmentRevise() {
+    if (!selectedId || !segmentSel) return;
+    const note = segmentNote.trim();
+    if (!note) return;
+    setSegmentRevising(true);
+    try {
+      const { sectionId, text: passage, start, end } = segmentSel;
+      const source =
+        segmentTarget === 'edit'
+          ? editedContentTex
+          : (detail?.sections?.find((sec) => sec.id === sectionId)?.contentTex ?? '');
+      const before = source.slice(Math.max(0, start - 200), start);
+      const after = source.slice(end, end + 200);
+      const data = await revisePassage(selectedId, sectionId, { passage, note, before, after });
+      const newTex = spliceSegment(source, start, end, data.revised);
+      if (segmentTarget === 'edit') {
+        setEditedContentTex(newTex);
+      } else {
+        // 立即刷新全文视图，并切入编辑态供审阅
+        setDetail((prev) =>
+          prev
+            ? {
+                ...prev,
+                sections: prev.sections?.map((s) => (s.id === sectionId ? { ...s, contentTex: newTex } : s)),
+              }
+            : prev,
+        );
+        setFulltext(null);
+        setContentSectionId(sectionId);
+        setEditedContentTex(newTex);
+        setEditingContent(true);
+      }
+      if (data.warnings?.length) alert(data.warnings.join('\n'));
+      setSegmentModal(false);
+      setSegmentNote('');
+      setSegmentSel(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '局部重写失败');
+    }
+    setSegmentRevising(false);
+  }
+
+  // 点击浮动按钮之外关闭选区
+  useEffect(() => {
+    if (!segmentSel) return;
+    function onDocPointerDown(e: PointerEvent) {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-segment-float]')) return;
+      setSegmentSel(null);
+    }
+    document.addEventListener('pointerdown', onDocPointerDown);
+    return () => document.removeEventListener('pointerdown', onDocPointerDown);
+  }, [segmentSel]);
+
+  // ── 自动定向修订：整章运行 ──
+  async function handleAutoReviseSection(sectionId: string) {
+    if (!selectedId) return;
+    setAutoRevising(true);
+    setAutoReviseResult(null);
+    try {
+      const res = await fetch(`/api/papers/${selectedId}/sections/${sectionId}/auto-revise`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '自动定向修订失败');
+      const sec = data.report?.sections?.[0];
+      setAutoReviseResult({
+        sectionId,
+        adopted: sec?.adopted ?? 0,
+        rejected: sec?.rejected ?? 0,
+      });
+      await loadDetail(selectedId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '自动定向修订失败');
+    }
+    setAutoRevising(false);
+  }
+
+  /** 客户端定位审计 finding 指向的片段（与后端 locateAuditFinding 逻辑对齐）。 */
+  function locateFindingPassageClient(
+    content: string,
+    finding: any,
+  ): { start: number; end: number; text: string } | null {
+    const loc = finding.location;
+    if (loc && /^\d{1,6}$/.test(String(loc).trim())) {
+      const start = Number(String(loc).trim());
+      if (start >= 0 && start < content.length) {
+        const e = content.indexOf('。', start);
+        const end = e === -1 ? content.length : e + 1;
+        const text = content.slice(start, end);
+        if (text.trim().length >= 4) return { start, end, text };
+      }
+    }
+    const q =
+      (finding.suggestion || '').match(/"([^"]{4,})"/)?.[1] || (finding.suggestion || '').match(/「([^」]{4,})」/)?.[1];
+    if (q) {
+      const idx = content.indexOf(q);
+      if (idx !== -1 && q.trim().length >= 4) return { start: idx, end: idx + q.length, text: q };
+    }
+    return null;
+  }
+
+  /** 审计发现 → 打开局部重写弹窗，预填修改意见。 */
+  function handleFixAuditFinding(sectionId: string, finding: any) {
+    const s = detail?.sections?.find((sec) => sec.id === sectionId);
+    if (!s?.contentTex) return;
+    const p = locateFindingPassageClient(s.contentTex, finding);
+    if (!p) {
+      alert('无法自动定位该问题对应的原文片段，请在编辑模式中手动选中后使用「局部重写」。');
+      return;
+    }
+    setAuditReportModal(null);
+    setContentSectionId(sectionId);
+    setEditedContentTex(s.contentTex);
+    setEditingContent(true);
+    setSegmentSel({ sectionId, text: p.text, start: p.start, end: p.end });
+    setSegmentTarget('edit');
+    setSegmentNote(finding.suggestion ?? finding.description ?? '');
+    setSegmentModal(true);
   }
 
   function handleContentSectionChange(newId: string | null) {
@@ -496,7 +751,7 @@ export function PapersPage() {
   }
 
   function handleStartEditContent() {
-    const s = detail?.sections?.find(sec => sec.id === contentSectionId);
+    const s = detail?.sections?.find((sec) => sec.id === contentSectionId);
     if (s?.contentTex) {
       setEditedContentTex(s.contentTex);
       setEditingContent(true);
@@ -565,7 +820,9 @@ export function PapersPage() {
       const data = await res.json();
       setPaperCitations(data.citations ?? []);
       setCitationTotal(data.total ?? 0);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleSaveCitation() {
@@ -600,7 +857,9 @@ export function PapersPage() {
       setCitationModal(null);
       resetCitationForm();
       await loadCitations(citationSectionId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleDeleteCitation(citeKey: string) {
@@ -609,7 +868,9 @@ export function PapersPage() {
     try {
       await fetch(`/api/papers/${selectedId}/citations/${citeKey}`, { method: 'DELETE' });
       await loadCitations(citationSectionId);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   function openCitationAddModal() {
@@ -628,13 +889,19 @@ export function PapersPage() {
   }
 
   function resetCitationForm() {
-    setCitKey(''); setCitBibtex(''); setCitTitle(''); setCitUrl(''); setCitAuthors(''); setCitYear('');
+    setCitKey('');
+    setCitBibtex('');
+    setCitTitle('');
+    setCitUrl('');
+    setCitAuthors('');
+    setCitYear('');
   }
 
   function toggleCollapse(id: string) {
     setCollapsed((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -645,7 +912,7 @@ export function PapersPage() {
     const hasChildren = node.children.length > 0;
     const isLeaf = !hasChildren;
     const sd = sectionDataFor(node.section.id);
-    const statusInfo = sd ? STATUS_MAP[sd.status] ?? STATUS_MAP.pending : null;
+    const statusInfo = sd ? (STATUS_MAP[sd.status] ?? STATUS_MAP.pending) : null;
     const isDetailOpen = expandedDetail === node.section.id;
     const isWriting = writingSectionId === node.section.id;
     const isContentSelected = contentSectionId === node.section.id;
@@ -667,9 +934,11 @@ export function PapersPage() {
         >
           {/* 展开/折叠图标 */}
           {hasChildren ? (
-            isCollapsed
-              ? <ChevronRight className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
-              : <ChevronDown className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+            isCollapsed ? (
+              <ChevronRight className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+            )
           ) : (
             <span className="w-3.5 flex-shrink-0" />
           )}
@@ -682,8 +951,7 @@ export function PapersPage() {
           {/* 标题 */}
           <span
             className={`text-sm flex-1 truncate ${
-              node.depth === 0 ? 'text-slate-100 font-semibold' :
-              node.depth === 1 ? 'text-slate-200' : 'text-slate-400'
+              node.depth === 0 ? 'text-slate-100 font-semibold' : node.depth === 1 ? 'text-slate-200' : 'text-slate-400'
             }`}
           >
             {node.section.id}. {node.section.title}
@@ -700,9 +968,7 @@ export function PapersPage() {
           )}
 
           {/* 页数 */}
-          <span className="text-xs text-slate-600 flex-shrink-0 w-10 text-right">
-            {node.section.estimatedPages}页
-          </span>
+          <span className="text-xs text-slate-600 flex-shrink-0 w-10 text-right">{node.section.estimatedPages}页</span>
 
           {/* 撰写按钮 (仅叶子节点) */}
           {isLeaf && (
@@ -718,7 +984,7 @@ export function PapersPage() {
               撰写
             </button>
           )}
-           {/* 查看原文按钮 (有内容的节点) */}
+          {/* 查看原文按钮 (有内容的节点) */}
           {hasContent && (
             <button
               onClick={(e) => {
@@ -761,13 +1027,19 @@ export function PapersPage() {
           {/* 上移/下移 */}
           <div className="opacity-0 group-hover:opacity-100 flex items-center flex-shrink-0">
             <button
-              onClick={(e) => { e.stopPropagation(); handleMoveSection(node.section.id, 'up'); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMoveSection(node.section.id, 'up');
+              }}
               className="inline-flex items-center h-6 px-1 text-xs text-slate-500 hover:text-slate-300"
             >
               <ArrowUp className="h-3 w-3" />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); handleMoveSection(node.section.id, 'down'); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMoveSection(node.section.id, 'down');
+              }}
               className="inline-flex items-center h-6 px-1 text-xs text-slate-500 hover:text-slate-300"
             >
               <ArrowDown className="h-3 w-3" />
@@ -803,7 +1075,13 @@ export function PapersPage() {
                 <div className="text-xs text-slate-500 uppercase tracking-wider">必须保留</div>
                 <div className="flex flex-wrap gap-1">
                   {node.section.mustKeep.map((item: string, i: number) => (
-                    <span key={i} className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.1)', color: 'rgba(34,197,94,0.8)' }}>{item}</span>
+                    <span
+                      key={i}
+                      className="text-xs px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(34,197,94,0.1)', color: 'rgba(34,197,94,0.8)' }}
+                    >
+                      {item}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -813,7 +1091,13 @@ export function PapersPage() {
                 <div className="text-xs text-slate-500 uppercase tracking-wider">禁止内容</div>
                 <div className="flex flex-wrap gap-1">
                   {node.section.forbidden.map((item: string, i: number) => (
-                    <span key={i} className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.1)', color: 'rgba(239,68,68,0.8)' }}>{item}</span>
+                    <span
+                      key={i}
+                      className="text-xs px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(239,68,68,0.1)', color: 'rgba(239,68,68,0.8)' }}
+                    >
+                      {item}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -830,17 +1114,17 @@ export function PapersPage() {
             {sd ? (
               <div className="flex items-center gap-2">
                 {sd.status === 'passed' && <FileCheck className="h-3 w-3 text-emerald-400" />}
-                {sd.status === 'needs_fix' || sd.status === 'failed' ? <AlertCircle className="h-3 w-3 text-red-400" /> : null}
+                {sd.status === 'needs_fix' || sd.status === 'failed' ? (
+                  <AlertCircle className="h-3 w-3 text-red-400" />
+                ) : null}
                 {(sd.status === 'drafting' || sd.status === 'auditing') && <Clock className="h-3 w-3 text-amber-400" />}
-                <span className="text-xs" style={{ color: statusInfo?.color }}>{statusInfo?.label}</span>
-                {hasContent && (
-                  <span className="text-xs text-slate-600 ml-2">共 {sd.contentTex!.length} 字符</span>
-                )}
+                <span className="text-xs" style={{ color: statusInfo?.color }}>
+                  {statusInfo?.label}
+                </span>
+                {hasContent && <span className="text-xs text-slate-600 ml-2">共 {sd.contentTex!.length} 字符</span>}
               </div>
             ) : (
-              <div className="text-xs text-slate-600 italic">
-                尚未撰写 — 点击上方"撰写"按钮启动 Pipeline 生成
-              </div>
+              <div className="text-xs text-slate-600 italic">尚未撰写 — 点击上方"撰写"按钮启动 Pipeline 生成</div>
             )}
 
             {/* 操作按钮 */}
@@ -856,7 +1140,12 @@ export function PapersPage() {
               {hasContent && (
                 <>
                   <button
-                    onClick={() => { setRewriteModal({ sectionId: node.section.id, title: node.section.title }); setRewriteDirection(''); setRewriteRequirements(''); setRewriteGivenContent(''); }}
+                    onClick={() => {
+                      setRewriteModal({ sectionId: node.section.id, title: node.section.title });
+                      setRewriteDirection('');
+                      setRewriteRequirements('');
+                      setRewriteGivenContent('');
+                    }}
                     className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-amber-400 hover:bg-amber-500/10 transition-colors"
                   >
                     <Edit3 className="h-3 w-3" />
@@ -890,7 +1179,11 @@ export function PapersPage() {
                 审计
               </button>
               <button
-                onClick={() => { setCitationSectionId(node.section.id); loadCitations(node.section.id); setShowCitations(true); }}
+                onClick={() => {
+                  setCitationSectionId(node.section.id);
+                  loadCitations(node.section.id);
+                  setShowCitations(true);
+                }}
                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-blue-400 hover:bg-blue-500/10 transition-colors"
               >
                 <Bookmark className="h-3 w-3" />
@@ -901,9 +1194,7 @@ export function PapersPage() {
         )}
 
         {/* 子节点 (非折叠时) */}
-        {hasChildren && !isCollapsed && (
-          <div>{node.children.map((child) => renderNode(child))}</div>
-        )}
+        {hasChildren && !isCollapsed && <div>{node.children.map((child) => renderNode(child))}</div>}
       </div>
     );
   }
@@ -930,7 +1221,9 @@ export function PapersPage() {
           >
             {papers.length === 0 && <option value="">暂无项目</option>}
             {papers.map((p) => (
-              <option key={p.id} value={p.id}>{p.title}</option>
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
             ))}
           </select>
         </div>
@@ -946,7 +1239,7 @@ export function PapersPage() {
 
         {/* 研究引导按钮 */}
         <button
-          onClick={() => window.location.hash = '#research-guide'}
+          onClick={() => (window.location.hash = '#research-guide')}
           className="glass-btn-secondary h-8 px-3 text-xs inline-flex items-center gap-1 text-emerald-400"
           title="苏格拉底研究引导"
         >
@@ -981,7 +1274,7 @@ export function PapersPage() {
         )}
         {detail?.outline && (
           <>
-            {detail.sections && detail.sections.some(s => s.contentTex) && (
+            {detail.sections && detail.sections.some((s) => s.contentTex) && (
               <>
                 <button
                   onClick={handleViewFulltext}
@@ -990,6 +1283,13 @@ export function PapersPage() {
                 >
                   {loadingFulltext ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
                   查看原文
+                </button>
+                <button
+                  onClick={() => setShowSmartEdit(true)}
+                  className="glass-btn-secondary h-8 px-3 text-xs inline-flex items-center gap-1"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  智能编辑
                 </button>
                 <button
                   onClick={handleExportMd}
@@ -1060,8 +1360,14 @@ export function PapersPage() {
             className="glass-input h-20 px-3 py-2 text-sm resize-none"
           />
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setShowCreate(false)} className="glass-btn-secondary h-8 px-4 text-xs">取消</button>
-            <button onClick={handleCreate} disabled={creating || !newTitle.trim()} className="glass-btn-primary h-8 px-4 text-sm">
+            <button onClick={() => setShowCreate(false)} className="glass-btn-secondary h-8 px-4 text-xs">
+              取消
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={creating || !newTitle.trim()}
+              className="glass-btn-primary h-8 px-4 text-sm"
+            >
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : '创建'}
             </button>
           </div>
@@ -1081,7 +1387,10 @@ export function PapersPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* 标题栏 */}
-            <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div
+              className="flex items-center justify-between px-5 py-3 flex-shrink-0"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            >
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-emerald-400" />
                 <span className="text-sm text-slate-200 font-medium">{fulltext.title}</span>
@@ -1130,9 +1439,9 @@ export function PapersPage() {
                     全部章节
                   </button>
                   {detail?.sections
-                    ?.filter(s => s.contentTex)
+                    ?.filter((s) => s.contentTex)
                     .sort((a, b) => a.sectionNumber - b.sectionNumber)
-                    .map(s => (
+                    .map((s) => (
                       <button
                         key={s.id}
                         onClick={() => setFulltextSection(s.id)}
@@ -1158,14 +1467,18 @@ export function PapersPage() {
                     </pre>
                   ) : (
                     (() => {
-                      const s = detail?.sections?.find(sec => sec.id === fulltextSection);
+                      const s = detail?.sections?.find((sec) => sec.id === fulltextSection);
                       if (!s || !s.contentTex) return <div className="text-xs text-slate-500">此章节暂无内容</div>;
                       return (
                         <div>
-                          <h3 className="text-sm font-semibold text-slate-200 mb-3">{s.sectionNumber}. {s.title}</h3>
+                          <h3 className="text-sm font-semibold text-slate-200 mb-3">
+                            {s.sectionNumber}. {s.title}
+                          </h3>
                           <pre
                             className="text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed"
                             style={{ tabSize: 2 }}
+                            onMouseUp={(e) => handleFulltextSelection(e, s.id)}
+                            onKeyUp={(e) => handleFulltextSelection(e, s.id)}
                           >
                             {s.contentTex}
                           </pre>
@@ -1203,13 +1516,17 @@ export function PapersPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.15)' }}>
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(239,68,68,0.15)' }}
+              >
                 <Trash2 className="h-5 w-5 text-red-400" />
               </div>
               <div>
                 <div className="text-sm text-slate-200 font-medium">确认删除</div>
                 <div className="text-xs text-slate-400 mt-1">
-                  将永久删除「{papers.find(p => p.id === deleteConfirm)?.title}」及其所有章节内容和圣经条目，此操作不可撤销。
+                  将永久删除「{papers.find((p) => p.id === deleteConfirm)?.title}
+                  」及其所有章节内容和圣经条目，此操作不可撤销。
                 </div>
               </div>
             </div>
@@ -1242,13 +1559,17 @@ export function PapersPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.15)' }}>
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(239,68,68,0.15)' }}
+              >
                 <Trash2 className="h-5 w-5 text-red-400" />
               </div>
               <div>
                 <div className="text-sm text-slate-200 font-medium">确认删除</div>
                 <div className="text-xs text-slate-400 mt-1">
-                  将永久删除章节「{detail?.outline?.sections.find(s => s.id === deleteSectionConfirm)?.title}」及其所有子章节，此操作不可撤销。
+                  将永久删除章节「{detail?.outline?.sections.find((s) => s.id === deleteSectionConfirm)?.title}
+                  」及其所有子章节，此操作不可撤销。
                 </div>
               </div>
             </div>
@@ -1269,6 +1590,115 @@ export function PapersPage() {
       )}
 
       {/* ── 修改弹窗 ── */}
+      {/* ── 片段局部重写：浮动工具栏 ── */}
+      {segmentSel && !segmentModal && (
+        <div
+          data-segment-float
+          className="fixed z-[60] flex items-center gap-1"
+          style={{ top: (segmentSel.rect?.bottom ?? 0) + 4, left: Math.max(8, segmentSel.rect?.left ?? 0) }}
+        >
+          <button
+            onClick={() => setSegmentModal(true)}
+            className="inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs text-amber-300 transition-all hover:opacity-90 shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, rgba(251,191,36,0.9), rgba(217,119,6,0.9))',
+              color: '#0f172a',
+            }}
+          >
+            <Edit3 className="h-3.5 w-3.5" />
+            局部重写
+          </button>
+        </div>
+      )}
+
+      {/* ── 片段局部重写：修改意见弹窗 ── */}
+      {segmentModal && segmentSel && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setSegmentModal(false)}
+        >
+          <div
+            className="w-full max-w-xl rounded-xl p-6 space-y-4"
+            style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(251,191,36,0.3)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <Edit3 className="h-5 w-5 text-amber-400" />
+              <div>
+                <div className="text-sm text-slate-200 font-medium">局部重写</div>
+                <div className="text-xs text-slate-500">只重写选中的这一段，公式与引文保持原样</div>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-slate-400 mb-1">选中的内容</div>
+              <pre
+                className="text-xs text-slate-300 whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-2 max-h-32 overflow-auto"
+                style={{ tabSize: 2 }}
+              >
+                {segmentSel.text}
+              </pre>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">修改意见</label>
+              <textarea
+                value={segmentNote}
+                onChange={(e) => setSegmentNote(e.target.value)}
+                placeholder="例如：这段论证逻辑不清晰，请强化证据链，去掉 AI 味"
+                className="glass-input w-full h-20 px-3 py-2 text-sm resize-none"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <button onClick={() => setSegmentModal(false)} className="glass-btn-secondary h-8 px-4 text-xs">
+                取消
+              </button>
+              <button
+                onClick={handleSegmentRevise}
+                disabled={segmentRevising || !segmentNote.trim()}
+                className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.9), rgba(217,119,6,0.9))' }}
+              >
+                {segmentRevising ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Edit3 className="h-3.5 w-3.5" />}
+                {segmentRevising ? '重写中...' : '确认修改'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 智能编辑 Agent 弹窗 ── */}
+      {showSmartEdit && selectedId && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowSmartEdit(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl p-6 space-y-4"
+            style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(16,185,129,0.3)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <Sparkles className="h-5 w-5 text-emerald-400" />
+              <div>
+                <div className="text-sm text-slate-200 font-medium">智能编辑 Agent</div>
+                <div className="text-xs text-slate-500">
+                  自动定位需要修改的段落 → 逐段局部重写 → 一致性校验 → 确认后落盘（自动备份）
+                </div>
+              </div>
+            </div>
+            <SmartEditPanel
+              paperId={selectedId}
+              onApplied={() => loadDetail(selectedId)}
+              onClose={() => setShowSmartEdit(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {rewriteModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -1293,7 +1723,7 @@ export function PapersPage() {
                 <label className="text-xs text-slate-400 block mb-1">修改方向</label>
                 <textarea
                   value={rewriteDirection}
-                  onChange={e => setRewriteDirection(e.target.value)}
+                  onChange={(e) => setRewriteDirection(e.target.value)}
                   placeholder="例如：完善逻辑推理链，增强论证强度"
                   className="glass-input w-full h-20 px-3 py-2 text-sm resize-none"
                 />
@@ -1302,7 +1732,7 @@ export function PapersPage() {
                 <label className="text-xs text-slate-400 block mb-1">修改要求</label>
                 <textarea
                   value={rewriteRequirements}
-                  onChange={e => setRewriteRequirements(e.target.value)}
+                  onChange={(e) => setRewriteRequirements(e.target.value)}
                   placeholder="例如：增加更多数据支撑，引用最新的研究成果"
                   className="glass-input w-full h-20 px-3 py-2 text-sm resize-none"
                 />
@@ -1311,7 +1741,7 @@ export function PapersPage() {
                 <label className="text-xs text-slate-400 block mb-1">给定的内容</label>
                 <textarea
                   value={rewriteGivenContent}
-                  onChange={e => setRewriteGivenContent(e.target.value)}
+                  onChange={(e) => setRewriteGivenContent(e.target.value)}
                   placeholder="可选：提供需要补充的具体内容、数据或参考文献"
                   className="glass-input w-full h-20 px-3 py-2 text-sm resize-none"
                 />
@@ -1337,58 +1767,68 @@ export function PapersPage() {
       )}
 
       {/* ── 编辑大纲章节弹窗 ── */}
-      {editingSection && (() => {
-        const sec = detail?.outline?.sections.find(s => s.id === editingSection);
-        if (!sec) return null;
-        return (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setEditingSection(null)}
-          >
+      {editingSection &&
+        (() => {
+          const sec = detail?.outline?.sections.find((s) => s.id === editingSection);
+          if (!sec) return null;
+          return (
             <div
-              className="w-full max-w-lg rounded-xl p-6 space-y-4"
-              style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(59,130,246,0.3)' }}
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+              onClick={() => setEditingSection(null)}
             >
-              <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <Edit3 className="h-5 w-5 text-blue-400" />
-                <div>
-                  <div className="text-sm text-slate-200 font-medium">编辑大纲章节</div>
-                  <div className="text-xs text-slate-500">{sec.id}. {sec.title}</div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">章节标题</label>
-                  <input
-                    value={editTitle}
-                    onChange={e => setEditTitle(e.target.value)}
-                    className="glass-input w-full h-8 px-3 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-400 block mb-1">核心论点</label>
-                  <textarea
-                    value={editCoreArg}
-                    onChange={e => setEditCoreArg(e.target.value)}
-                    className="glass-input w-full h-24 px-3 py-2 text-sm resize-none"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button onClick={() => setEditingSection(null)} className="glass-btn-secondary h-8 px-4 text-xs">取消</button>
-                <button onClick={handleSaveSection} className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9))' }}
+              <div
+                className="w-full max-w-lg rounded-xl p-6 space-y-4"
+                style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(59,130,246,0.3)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="flex items-center gap-3 pb-3"
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
                 >
-                  <Save className="h-3.5 w-3.5" />
-                  保存
-                </button>
+                  <Edit3 className="h-5 w-5 text-blue-400" />
+                  <div>
+                    <div className="text-sm text-slate-200 font-medium">编辑大纲章节</div>
+                    <div className="text-xs text-slate-500">
+                      {sec.id}. {sec.title}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">章节标题</label>
+                    <input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="glass-input w-full h-8 px-3 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1">核心论点</label>
+                    <textarea
+                      value={editCoreArg}
+                      onChange={(e) => setEditCoreArg(e.target.value)}
+                      className="glass-input w-full h-24 px-3 py-2 text-sm resize-none"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end pt-2">
+                  <button onClick={() => setEditingSection(null)} className="glass-btn-secondary h-8 px-4 text-xs">
+                    取消
+                  </button>
+                  <button
+                    onClick={handleSaveSection}
+                    className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90"
+                    style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9))' }}
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    保存
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* ── 新增章节弹窗 ── */}
       {showAddSection && (
@@ -1411,29 +1851,52 @@ export function PapersPage() {
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-slate-400 block mb-1">章节 ID <span className="text-red-400">*</span></label>
-                <input value={addSecId} onChange={e => setAddSecId(e.target.value)} placeholder="例如：3-4"
-                  className="glass-input w-full h-8 px-3 text-sm" />
+                <label className="text-xs text-slate-400 block mb-1">
+                  章节 ID <span className="text-red-400">*</span>
+                </label>
+                <input
+                  value={addSecId}
+                  onChange={(e) => setAddSecId(e.target.value)}
+                  placeholder="例如：3-4"
+                  className="glass-input w-full h-8 px-3 text-sm"
+                />
               </div>
               <div>
-                <label className="text-xs text-slate-400 block mb-1">标题 <span className="text-red-400">*</span></label>
-                <input value={addSecTitle} onChange={e => setAddSecTitle(e.target.value)} placeholder="例如：实验设置"
-                  className="glass-input w-full h-8 px-3 text-sm" />
+                <label className="text-xs text-slate-400 block mb-1">
+                  标题 <span className="text-red-400">*</span>
+                </label>
+                <input
+                  value={addSecTitle}
+                  onChange={(e) => setAddSecTitle(e.target.value)}
+                  placeholder="例如：实验设置"
+                  className="glass-input w-full h-8 px-3 text-sm"
+                />
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">核心论点</label>
-                <textarea value={addSecCoreArg} onChange={e => setAddSecCoreArg(e.target.value)}
-                  className="glass-input w-full h-20 px-3 py-2 text-sm resize-none" />
+                <textarea
+                  value={addSecCoreArg}
+                  onChange={(e) => setAddSecCoreArg(e.target.value)}
+                  className="glass-input w-full h-20 px-3 py-2 text-sm resize-none"
+                />
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">父级章节 ID（可选）</label>
-                <input value={addSecParent} onChange={e => setAddSecParent(e.target.value)} placeholder="例如：3"
-                  className="glass-input w-full h-8 px-3 text-sm" />
+                <input
+                  value={addSecParent}
+                  onChange={(e) => setAddSecParent(e.target.value)}
+                  placeholder="例如：3"
+                  className="glass-input w-full h-8 px-3 text-sm"
+                />
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setShowAddSection(false)} className="glass-btn-secondary h-8 px-4 text-xs">取消</button>
-              <button onClick={handleAddSection} disabled={!addSecId || !addSecTitle}
+              <button onClick={() => setShowAddSection(false)} className="glass-btn-secondary h-8 px-4 text-xs">
+                取消
+              </button>
+              <button
+                onClick={handleAddSection}
+                disabled={!addSecId || !addSecTitle}
                 className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.9), rgba(5,150,105,0.9))' }}
               >
@@ -1467,31 +1930,40 @@ export function PapersPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-slate-400 block mb-1">引用格式模板（可选，可覆盖默认 GB/T 7714）</label>
-                <textarea value={refGenTemplate} onChange={e => setRefGenTemplate(e.target.value)}
+                <textarea
+                  value={refGenTemplate}
+                  onChange={(e) => setRefGenTemplate(e.target.value)}
                   placeholder="例如：{authors}. {title}[J]. {journal}, {year}, {volume}({issue}): {pages}.&#10;留空使用默认 GB/T 7714-2015 格式"
-                  className="glass-input w-full h-28 px-3 py-2 text-sm font-mono resize-none" />
+                  className="glass-input w-full h-28 px-3 py-2 text-sm font-mono resize-none"
+                />
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setShowRefGen(false)} className="glass-btn-secondary h-8 px-4 text-xs">取消</button>
-              <button onClick={async () => {
-                setRefGenLoading(true);
-                try {
-                  const res = await fetch(`/api/papers/${selectedId}/generate-references`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ template: refGenTemplate || undefined }),
-                  });
-                  const data = await res.json();
-                  if (data.ok) {
-                    setShowRefGen(false);
-                    await loadDetail(selectedId!);
-                  } else {
-                    alert(data.error || '生成失败');
+              <button onClick={() => setShowRefGen(false)} className="glass-btn-secondary h-8 px-4 text-xs">
+                取消
+              </button>
+              <button
+                onClick={async () => {
+                  setRefGenLoading(true);
+                  try {
+                    const res = await fetch(`/api/papers/${selectedId}/generate-references`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ template: refGenTemplate || undefined }),
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                      setShowRefGen(false);
+                      await loadDetail(selectedId!);
+                    } else {
+                      alert(data.error || '生成失败');
+                    }
+                  } catch {
+                    alert('网络错误');
                   }
-                } catch { alert('网络错误'); }
-                setRefGenLoading(false);
-              }} disabled={refGenLoading}
+                  setRefGenLoading(false);
+                }}
+                disabled={refGenLoading}
                 className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, rgba(217,119,6,0.9), rgba(180,83,9,0.9))' }}
               >
@@ -1516,7 +1988,10 @@ export function PapersPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* 标题栏 */}
-            <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div
+              className="flex items-center justify-between px-5 py-3 flex-shrink-0"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            >
               <div className="flex items-center gap-2">
                 <Bookmark className="h-4 w-4 text-blue-400" />
                 <span className="text-sm text-slate-200 font-medium">
@@ -1525,30 +2000,39 @@ export function PapersPage() {
                 <span className="text-xs text-slate-500">({paperCitations.length} 条)</span>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={openCitationAddModal}
+                <button
+                  onClick={openCitationAddModal}
                   className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                 >
                   <Plus className="h-3 w-3" />
                   新增
                 </button>
-                <button onClick={async () => {
-                  setLookupLoading(true);
-                  try {
-                    const res = await fetch(`/api/papers/${selectedId}/citations/lookup`, { method: 'POST' });
-                    const data = await res.json();
-                    if (!res.ok) { alert(data.error || '反查失败'); return; }
-                    await loadCitations(citationSectionId);
-                    const success = data.results?.filter((r: any) => r.found).length ?? 0;
-                    alert(`反查完成：共 ${data.lookedUp ?? 0} 条，成功 ${success} 条`);
-                  } catch { alert('网络错误'); }
-                  setLookupLoading(false);
-                }} disabled={lookupLoading}
+                <button
+                  onClick={async () => {
+                    setLookupLoading(true);
+                    try {
+                      const res = await fetch(`/api/papers/${selectedId}/citations/lookup`, { method: 'POST' });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        alert(data.error || '反查失败');
+                        return;
+                      }
+                      await loadCitations(citationSectionId);
+                      const success = data.results?.filter((r: any) => r.found).length ?? 0;
+                      alert(`反查完成：共 ${data.lookedUp ?? 0} 条，成功 ${success} 条`);
+                    } catch {
+                      alert('网络错误');
+                    }
+                    setLookupLoading(false);
+                  }}
+                  disabled={lookupLoading}
                   className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-amber-400 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
                 >
                   {lookupLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
                   {lookupLoading ? '反查中...' : '反查'}
                 </button>
-                <button onClick={() => setShowCitations(false)}
+                <button
+                  onClick={() => setShowCitations(false)}
                   className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5"
                 >
                   <X className="h-4 w-4" />
@@ -1561,7 +2045,8 @@ export function PapersPage() {
                 <div className="text-xs text-slate-500 text-center py-8">暂无引文，点击"新增"添加</div>
               ) : (
                 paperCitations.map((c: any) => (
-                  <div key={c.id}
+                  <div
+                    key={c.id}
                     className="p-3 rounded-lg space-y-1"
                     style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
                   >
@@ -1575,7 +2060,10 @@ export function PapersPage() {
                         <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-600">
                           {c.year && <span>{c.year}</span>}
                           {c.url && (
-                            <a href={c.url} target="_blank" rel="noopener noreferrer"
+                            <a
+                              href={c.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-400 inline-flex items-center gap-0.5"
                             >
                               <ExternalLink className="h-2.5 w-2.5" />
@@ -1585,12 +2073,14 @@ export function PapersPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={() => openCitationEditModal(c)}
+                        <button
+                          onClick={() => openCitationEditModal(c)}
                           className="h-6 px-1.5 rounded text-xs text-blue-400 hover:bg-blue-500/10"
                         >
                           <Edit3 className="h-3 w-3" />
                         </button>
-                        <button onClick={() => handleDeleteCitation(c.cite_key)}
+                        <button
+                          onClick={() => handleDeleteCitation(c.cite_key)}
                           className="h-6 px-1.5 rounded text-xs text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -1598,9 +2088,12 @@ export function PapersPage() {
                       </div>
                     </div>
                     {c.bibtex && (
-                      <pre className="text-[10px] text-slate-600 mt-1 p-2 rounded overflow-x-auto"
+                      <pre
+                        className="text-[10px] text-slate-600 mt-1 p-2 rounded overflow-x-auto"
                         style={{ background: 'rgba(0,0,0,0.2)' }}
-                      >{c.bibtex}</pre>
+                      >
+                        {c.bibtex}
+                      </pre>
                     )}
                   </div>
                 ))
@@ -1630,18 +2123,47 @@ export function PapersPage() {
               </div>
             </div>
             {statusLoading ? (
-              <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              </div>
             ) : (
               <div className="space-y-3 text-xs">
-                <div className="flex justify-between"><span className="text-slate-400">状态</span><span className="text-slate-200">{STATUS_MAP[statusModal.data.status]?.label ?? statusModal.data.status}</span></div>
-                <div className="flex justify-between"><span className="text-slate-400">版本</span><span className="text-slate-200">{statusModal.data.version}</span></div>
-                {statusModal.data.wordCount > 0 && <div className="flex justify-between"><span className="text-slate-400">字数</span><span className="text-slate-200">{statusModal.data.wordCount}</span></div>}
-                {statusModal.data.contentLength > 0 && <div className="flex justify-between"><span className="text-slate-400">字符数</span><span className="text-slate-200">{statusModal.data.contentLength}</span></div>}
-                {statusModal.data.coreArgument && <div><div className="text-slate-400 mb-1">核心论点</div><div className="text-slate-300 p-2 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>{statusModal.data.coreArgument}</div></div>}
+                <div className="flex justify-between">
+                  <span className="text-slate-400">状态</span>
+                  <span className="text-slate-200">
+                    {STATUS_MAP[statusModal.data.status]?.label ?? statusModal.data.status}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">版本</span>
+                  <span className="text-slate-200">{statusModal.data.version}</span>
+                </div>
+                {statusModal.data.wordCount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">字数</span>
+                    <span className="text-slate-200">{statusModal.data.wordCount}</span>
+                  </div>
+                )}
+                {statusModal.data.contentLength > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">字符数</span>
+                    <span className="text-slate-200">{statusModal.data.contentLength}</span>
+                  </div>
+                )}
+                {statusModal.data.coreArgument && (
+                  <div>
+                    <div className="text-slate-400 mb-1">核心论点</div>
+                    <div className="text-slate-300 p-2 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                      {statusModal.data.coreArgument}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <div className="flex justify-end pt-2">
-              <button onClick={() => setStatusModal(null)} className="glass-btn-secondary h-8 px-4 text-xs">关闭</button>
+              <button onClick={() => setStatusModal(null)} className="glass-btn-secondary h-8 px-4 text-xs">
+                关闭
+              </button>
             </div>
           </div>
         </div>
@@ -1659,22 +2181,84 @@ export function PapersPage() {
             style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(168,85,247,0.3)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <AlertCircle className="h-5 w-5 text-purple-400" />
-              <div>
-                <div className="text-sm text-slate-200 font-medium">审计报告</div>
-                <div className="text-xs text-slate-500">{auditReportModal.data.title}</div>
+            <div
+              className="flex items-center justify-between pb-3"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-purple-400" />
+                <div>
+                  <div className="text-sm text-slate-200 font-medium">审计报告</div>
+                  <div className="text-xs text-slate-500">{auditReportModal.data.title}</div>
+                </div>
               </div>
+              <button
+                onClick={() => handleAutoReviseSection(auditReportModal.sectionId)}
+                disabled={autoRevising}
+                className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-purple-300 hover:bg-purple-500/10 disabled:opacity-50 transition-colors"
+              >
+                {autoRevising ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                {autoRevising ? '修订中...' : '自动定向修订'}
+              </button>
             </div>
             {auditReportLoading ? (
-              <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              </div>
             ) : (
               <div className="space-y-3 text-xs">
-                <div className="flex justify-between"><span className="text-slate-400">当前状态</span><span className="text-slate-200">{STATUS_MAP[auditReportModal.data.status]?.label ?? auditReportModal.data.status}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">当前状态</span>
+                  <span className="text-slate-200">
+                    {STATUS_MAP[auditReportModal.data.status]?.label ?? auditReportModal.data.status}
+                  </span>
+                </div>
+                {autoReviseResult && autoReviseResult.sectionId === auditReportModal.sectionId && (
+                  <div
+                    className="text-xs px-3 py-2 rounded"
+                    style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
+                  >
+                    自动定向修订完成：已采纳 <span className="text-emerald-400">{autoReviseResult.adopted}</span>{' '}
+                    处，拒绝 <span className="text-slate-400">{autoReviseResult.rejected}</span> 处。
+                  </div>
+                )}
                 <div className="p-3 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
-                  <div className="text-slate-400 mb-1">审计结果</div>
-                  {auditReportModal.data.reportAvailable ? (
-                    <div className="text-slate-300">审计报告已生成，可在 Pipeline 运行详情中查看。</div>
+                  <div className="text-slate-400 mb-2">审计发现（可逐条修复）</div>
+                  {(auditReportModal.data.report?.findings ?? []).length > 0 ? (
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {auditReportModal.data.report.findings.map((f: any) => (
+                        <div key={f.id} className="p-2 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-slate-300">{f.dimension}</span>
+                            <span
+                              style={{
+                                color:
+                                  f.severity === 'critical'
+                                    ? '#f87171'
+                                    : f.severity === 'warning'
+                                      ? '#fbbf24'
+                                      : '#94a3b8',
+                              }}
+                            >
+                              {f.severity === 'critical' ? '严重' : f.severity === 'warning' ? '警告' : '提示'}
+                            </span>
+                          </div>
+                          <div className="text-slate-300 mt-1">{f.description}</div>
+                          {f.suggestion && <div className="text-slate-500 mt-1">建议：{f.suggestion}</div>}
+                          <div className="flex justify-end mt-1">
+                            <button
+                              onClick={() => handleFixAuditFinding(auditReportModal.sectionId, f)}
+                              className="inline-flex items-center gap-1 h-6 px-2 rounded text-xs text-amber-400 hover:bg-amber-500/10 transition-colors"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              修复此问题
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : auditReportModal.data.reportAvailable ? (
+                    <div className="text-slate-300">无具体发现（审计报告已生成，可在 Pipeline 运行详情中查看）。</div>
                   ) : (
                     <div className="text-slate-500">{auditReportModal.data.message}</div>
                   )}
@@ -1682,7 +2266,9 @@ export function PapersPage() {
               </div>
             )}
             <div className="flex justify-end pt-2">
-              <button onClick={() => setAuditReportModal(null)} className="glass-btn-secondary h-8 px-4 text-xs">关闭</button>
+              <button onClick={() => setAuditReportModal(null)} className="glass-btn-secondary h-8 px-4 text-xs">
+                关闭
+              </button>
             </div>
           </div>
         </div>
@@ -1703,54 +2289,80 @@ export function PapersPage() {
             <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <Bookmark className="h-5 w-5 text-blue-400" />
               <div>
-                <div className="text-sm text-slate-200 font-medium">{citationModal.mode === 'add' ? '新增引文' : '编辑引文'}</div>
+                <div className="text-sm text-slate-200 font-medium">
+                  {citationModal.mode === 'add' ? '新增引文' : '编辑引文'}
+                </div>
               </div>
             </div>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {citationModal.mode === 'add' && (
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">引用 Key <span className="text-red-400">*</span></label>
-                  <input value={citKey} onChange={e => setCitKey(e.target.value)}
+                  <label className="text-xs text-slate-400 block mb-1">
+                    引用 Key <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    value={citKey}
+                    onChange={(e) => setCitKey(e.target.value)}
                     placeholder="例如：vaswani2017attention"
-                    className="glass-input w-full h-8 px-3 text-sm" />
+                    className="glass-input w-full h-8 px-3 text-sm"
+                  />
                 </div>
               )}
               <div>
                 <label className="text-xs text-slate-400 block mb-1">标题</label>
-                <input value={citTitle} onChange={e => setCitTitle(e.target.value)}
+                <input
+                  value={citTitle}
+                  onChange={(e) => setCitTitle(e.target.value)}
                   placeholder="文献标题"
-                  className="glass-input w-full h-8 px-3 text-sm" />
+                  className="glass-input w-full h-8 px-3 text-sm"
+                />
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">URL</label>
-                <input value={citUrl} onChange={e => setCitUrl(e.target.value)}
+                <input
+                  value={citUrl}
+                  onChange={(e) => setCitUrl(e.target.value)}
                   placeholder="https://..."
-                  className="glass-input w-full h-8 px-3 text-sm" />
+                  className="glass-input w-full h-8 px-3 text-sm"
+                />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="text-xs text-slate-400 block mb-1">作者</label>
-                  <input value={citAuthors} onChange={e => setCitAuthors(e.target.value)}
+                  <input
+                    value={citAuthors}
+                    onChange={(e) => setCitAuthors(e.target.value)}
                     placeholder="作者姓名"
-                    className="glass-input w-full h-8 px-3 text-sm" />
+                    className="glass-input w-full h-8 px-3 text-sm"
+                  />
                 </div>
                 <div className="w-24">
                   <label className="text-xs text-slate-400 block mb-1">年份</label>
-                  <input value={citYear} onChange={e => setCitYear(e.target.value)}
+                  <input
+                    value={citYear}
+                    onChange={(e) => setCitYear(e.target.value)}
                     placeholder="2024"
-                    className="glass-input w-full h-8 px-3 text-sm" />
+                    className="glass-input w-full h-8 px-3 text-sm"
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">BibTeX</label>
-                <textarea value={citBibtex} onChange={e => setCitBibtex(e.target.value)}
+                <textarea
+                  value={citBibtex}
+                  onChange={(e) => setCitBibtex(e.target.value)}
                   placeholder="@article{key, ...}"
-                  className="glass-input w-full h-24 px-3 py-2 text-sm font-mono resize-none" />
+                  className="glass-input w-full h-24 px-3 py-2 text-sm font-mono resize-none"
+                />
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setCitationModal(null)} className="glass-btn-secondary h-8 px-4 text-xs">取消</button>
-              <button onClick={handleSaveCitation} disabled={citationModal.mode === 'add' && !citKey}
+              <button onClick={() => setCitationModal(null)} className="glass-btn-secondary h-8 px-4 text-xs">
+                取消
+              </button>
+              <button
+                onClick={handleSaveCitation}
+                disabled={citationModal.mode === 'add' && !citKey}
                 className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.9), rgba(37,99,235,0.9))' }}
               >
@@ -1763,72 +2375,85 @@ export function PapersPage() {
       )}
 
       {/* ── 优化关联章节弹窗 ── */}
-      {showOptimizeModal && (() => {
-        const currentSec = detail?.outline?.sections.find(s => s.id === contentSectionId);
-        const siblings = detail?.outline?.sections.filter(
-          s => s.id !== contentSectionId && s.parent === (currentSec?.parent ?? null)
-        ) ?? [];
-        return (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setShowOptimizeModal(false)}
-          >
+      {showOptimizeModal &&
+        (() => {
+          const currentSec = detail?.outline?.sections.find((s) => s.id === contentSectionId);
+          const siblings =
+            detail?.outline?.sections.filter(
+              (s) => s.id !== contentSectionId && s.parent === (currentSec?.parent ?? null),
+            ) ?? [];
+          return (
             <div
-              className="w-full max-w-lg rounded-xl p-6 space-y-4"
-              style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(168,85,247,0.3)' }}
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+              onClick={() => setShowOptimizeModal(false)}
             >
-              <div className="flex items-center gap-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <Sparkles className="h-5 w-5 text-purple-400" />
-                <div>
-                  <div className="text-sm text-slate-200 font-medium">优化关联章节</div>
-                  <div className="text-xs text-slate-500">基于当前章节的修改，优化相关联的章节</div>
+              <div
+                className="w-full max-w-lg rounded-xl p-6 space-y-4"
+                style={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(168,85,247,0.3)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="flex items-center gap-3 pb-3"
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <Sparkles className="h-5 w-5 text-purple-400" />
+                  <div>
+                    <div className="text-sm text-slate-200 font-medium">优化关联章节</div>
+                    <div className="text-xs text-slate-500">基于当前章节的修改，优化相关联的章节</div>
+                  </div>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {siblings.length === 0 ? (
+                    <div className="text-xs text-slate-500 text-center py-4">没有找到关联章节</div>
+                  ) : (
+                    siblings.map((sec) => (
+                      <label
+                        key={sec.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-white/[0.03]"
+                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={optimizeTargetIds.includes(sec.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setOptimizeTargetIds((prev) => [...prev, sec.id]);
+                            } else {
+                              setOptimizeTargetIds((prev) => prev.filter((id) => id !== sec.id));
+                            }
+                          }}
+                          className="rounded border-slate-600"
+                        />
+                        <span className="text-xs text-slate-300">
+                          {sec.id}. {sec.title}
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                <div className="flex gap-2 justify-end pt-2">
+                  <button onClick={() => setShowOptimizeModal(false)} className="glass-btn-secondary h-8 px-4 text-xs">
+                    取消
+                  </button>
+                  <button
+                    onClick={handleOptimizeRelated}
+                    disabled={optimizing || optimizeTargetIds.length === 0}
+                    className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.9), rgba(126,34,206,0.9))' }}
+                  >
+                    {optimizing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5" />
+                    )}
+                    {optimizing ? '优化中...' : '开始优化'}
+                  </button>
                 </div>
               </div>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {siblings.length === 0 ? (
-                  <div className="text-xs text-slate-500 text-center py-4">没有找到关联章节</div>
-                ) : (
-                  siblings.map(sec => (
-                    <label
-                      key={sec.id}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-white/[0.03]"
-                      style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={optimizeTargetIds.includes(sec.id)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setOptimizeTargetIds(prev => [...prev, sec.id]);
-                          } else {
-                            setOptimizeTargetIds(prev => prev.filter(id => id !== sec.id));
-                          }
-                        }}
-                        className="rounded border-slate-600"
-                      />
-                      <span className="text-xs text-slate-300">{sec.id}. {sec.title}</span>
-                    </label>
-                  ))
-                )}
-              </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <button onClick={() => setShowOptimizeModal(false)} className="glass-btn-secondary h-8 px-4 text-xs">取消</button>
-                <button
-                  onClick={handleOptimizeRelated}
-                  disabled={optimizing || optimizeTargetIds.length === 0}
-                  className="inline-flex items-center gap-2 h-8 px-4 rounded-lg text-xs text-white transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.9), rgba(126,34,206,0.9))' }}
-                >
-                  {optimizing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  {optimizing ? '优化中...' : '开始优化'}
-                </button>
-              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* ============================================================
             主体：左右平铺 — 架构(大纲树) | 原文
@@ -1854,25 +2479,30 @@ export function PapersPage() {
               style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}
             >
               <div className="flex items-center justify-between mb-4 px-2">
-                <h2 className="text-base font-bold text-slate-100">
-                  {detail.outline.title}
-                </h2>
+                <h2 className="text-base font-bold text-slate-100">{detail.outline.title}</h2>
                 <div className="flex items-center gap-1">
-                <button onClick={() => { setCitationSectionId(null); loadCitations(null); setShowCitations(true); }}
+                  <button
+                    onClick={() => {
+                      setCitationSectionId(null);
+                      loadCitations(null);
+                      setShowCitations(true);
+                    }}
                     className="inline-flex items-center gap-1 h-7 px-2 rounded text-xs text-blue-400 hover:bg-blue-500/10 transition-colors"
                     title="管理引文"
                   >
                     <Bookmark className="h-3 w-3" />
                     引文
                   </button>
-                  <button onClick={() => setShowRefGen(true)}
+                  <button
+                    onClick={() => setShowRefGen(true)}
                     className="inline-flex items-center gap-1 h-7 px-2 rounded text-xs text-amber-400 hover:bg-amber-500/10 transition-colors"
                     title="生成参考文献章节"
                   >
                     <List className="h-3 w-3" />
                     参考文献
                   </button>
-                  <button onClick={() => setShowAddSection(true)}
+                  <button
+                    onClick={() => setShowAddSection(true)}
                     className="inline-flex items-center gap-1 h-7 px-2 rounded text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                     title="新增章节"
                   >
@@ -1881,25 +2511,30 @@ export function PapersPage() {
                   </button>
                 </div>
               </div>
-              <div className="space-y-0.5">
-                {outlineTree.map((node) => renderNode(node))}
-              </div>
+              <div className="space-y-0.5">{outlineTree.map((node) => renderNode(node))}</div>
             </div>
 
             {/* 右侧：原文内容 */}
             <div className="flex-1 flex flex-col overflow-hidden p-4">
               {contentSectionId ? (
                 (() => {
-                  const s = detail?.sections?.find(sec => sec.id === contentSectionId);
+                  const s = detail?.sections?.find((sec) => sec.id === contentSectionId);
                   if (!s || !s.contentTex) {
                     return <div className="text-sm text-slate-500 text-center mt-20">此章节暂无内容</div>;
                   }
                   return (
                     <div className="flex flex-col flex-1 min-h-0">
-                      <div className="flex items-center justify-between mb-4 pb-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div
+                        className="flex items-center justify-between mb-4 pb-3 flex-shrink-0"
+                        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                      >
                         <div>
-                          <h3 className="text-base font-semibold text-slate-100">{s.sectionNumber}. {s.title}</h3>
-                          <span className="text-xs text-slate-500 mt-1">共 {s.contentTex.length} 字符 · 版本 v{s.version}</span>
+                          <h3 className="text-base font-semibold text-slate-100">
+                            {s.sectionNumber}. {s.title}
+                          </h3>
+                          <span className="text-xs text-slate-500 mt-1">
+                            共 {s.contentTex.length} 字符 · 版本 v{s.version}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           {editingContent ? (
@@ -1909,7 +2544,11 @@ export function PapersPage() {
                                 disabled={savingContent}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 transition-colors"
                               >
-                                {savingContent ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                {savingContent ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Save className="h-3 w-3" />
+                                )}
                                 保存
                               </button>
                               <button
@@ -1925,7 +2564,11 @@ export function PapersPage() {
                               {s.status && (
                                 <span
                                   className="text-xs px-2 py-0.5 rounded-full"
-                                  style={{ color: STATUS_MAP[s.status]?.color, background: STATUS_MAP[s.status]?.bg, border: `1px solid ${STATUS_MAP[s.status]?.color}20` }}
+                                  style={{
+                                    color: STATUS_MAP[s.status]?.color,
+                                    background: STATUS_MAP[s.status]?.bg,
+                                    border: `1px solid ${STATUS_MAP[s.status]?.color}20`,
+                                  }}
                                 >
                                   {STATUS_MAP[s.status]?.label}
                                 </span>
@@ -1935,11 +2578,20 @@ export function PapersPage() {
                                 disabled={writingSectionId === s.id}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50 transition-colors"
                               >
-                                {writingSectionId === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                                {writingSectionId === s.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Play className="h-3 w-3" />
+                                )}
                                 重新撰写
                               </button>
                               <button
-                                onClick={() => { setRewriteModal({ sectionId: s.id, title: s.title }); setRewriteDirection(''); setRewriteRequirements(''); setRewriteGivenContent(''); }}
+                                onClick={() => {
+                                  setRewriteModal({ sectionId: s.id, title: s.title });
+                                  setRewriteDirection('');
+                                  setRewriteRequirements('');
+                                  setRewriteGivenContent('');
+                                }}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-amber-400 hover:bg-amber-500/10 transition-colors"
                               >
                                 <Edit3 className="h-3 w-3" />
@@ -1954,17 +2606,33 @@ export function PapersPage() {
                               </button>
                               <button
                                 onClick={() => {
-                                  const currentSec = detail?.outline?.sections.find(sec => sec.id === contentSectionId);
-                                  const siblings = detail?.outline?.sections.filter(
-                                    sec => sec.id !== contentSectionId && sec.parent === (currentSec?.parent ?? null)
-                                  ) ?? [];
-                                  setOptimizeTargetIds(siblings.map(sec => sec.id));
+                                  const currentSec = detail?.outline?.sections.find(
+                                    (sec) => sec.id === contentSectionId,
+                                  );
+                                  const siblings =
+                                    detail?.outline?.sections.filter(
+                                      (sec) =>
+                                        sec.id !== contentSectionId && sec.parent === (currentSec?.parent ?? null),
+                                    ) ?? [];
+                                  setOptimizeTargetIds(siblings.map((sec) => sec.id));
                                   setShowOptimizeModal(true);
                                 }}
                                 className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-purple-400 hover:bg-purple-500/10 transition-colors"
                               >
                                 <Sparkles className="h-3 w-3" />
                                 优化关联章节
+                              </button>
+                              <button
+                                onClick={() => handleAutoReviseSection(contentSectionId!)}
+                                disabled={autoRevising}
+                                className="inline-flex items-center gap-1 h-7 px-3 rounded text-xs text-fuchsia-400 hover:bg-fuchsia-500/10 disabled:opacity-50 transition-colors"
+                              >
+                                {autoRevising ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Shield className="h-3 w-3" />
+                                )}
+                                {autoRevising ? '修订中...' : '自动定向修订'}
                               </button>
                             </>
                           )}
@@ -1973,9 +2641,16 @@ export function PapersPage() {
                       {editingContent ? (
                         <textarea
                           value={editedContentTex}
-                          onChange={e => setEditedContentTex(e.target.value)}
+                          onChange={(e) => setEditedContentTex(e.target.value)}
+                          onMouseUp={handleEditTextareaSelect}
+                          onKeyUp={handleEditTextareaSelect}
                           className="flex-1 min-h-0 w-full px-3 py-2 text-xs text-slate-300 font-mono leading-relaxed resize-none rounded-lg"
-                          style={{ tabSize: 2, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', outline: 'none' }}
+                          style={{
+                            tabSize: 2,
+                            background: 'rgba(0,0,0,0.2)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            outline: 'none',
+                          }}
                         />
                       ) : (
                         <div className="flex-1 min-h-0 overflow-y-auto">

@@ -9,3 +9,5 @@ export { WriterAgent } from './writer.ts';
 export { ObserverAgent } from './observer.ts';
 export type { ObserverInput } from './observer.ts';
 export { NormalizerAgent } from './normalizer.ts';
+export { ReviserAgent } from './reviser.ts';
+export type { ReviserInput, ReviserOutput } from '../types/index.ts';

@@ -24,6 +24,7 @@ export const DEFAULT_AGENT_MODELS: ScholariumConfig['llm']['models'] = {
   antiAiDetector: { agent: 'antiAiDetector', model: 'deepseek-chat', temperature: 0, taskType: 'audit' },
   antiAiRewriter: { agent: 'antiAiRewriter', model: 'deepseek-chat', temperature: 0.3, taskType: 'creative' },
   librarian: { agent: 'librarian', model: 'deepseek-chat', temperature: 0, taskType: 'factual' },
+  reviser: { agent: 'reviser', model: 'deepseek-chat', temperature: 0.3, taskType: 'creative' },
 };
 
 export function createDefaultConfig(root = '.'): ScholariumConfig {

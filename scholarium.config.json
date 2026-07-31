@@ -172,6 +172,12 @@
         "model": "deepseek-v4-pro",
         "temperature": 0.2,
         "taskType": "audit"
+      },
+      "reviser": {
+        "agent": "reviser",
+        "model": "deepseek-v4-flash",
+        "temperature": 0.3,
+        "taskType": "creative"
       }
     },
     "fallbacks": {

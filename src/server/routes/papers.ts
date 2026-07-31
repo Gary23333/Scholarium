@@ -31,6 +31,7 @@ type PapersRouteContext = Pick<
   | 'port'
   | 'persistSection'
   | 'hasLLMFor'
+  | 'reviser'
   | 'mmSessions'
   | 'sseClients'
 >;
@@ -410,6 +411,7 @@ export function registerPapersRoutes(
       'compress_section',
       'rewrite_paragraph',
       'fix_terminology',
+      'targeted_revision',
       'user_comment',
     ];
     const actionType = validActions.includes(action) ? action : 'user_comment';
@@ -446,6 +448,44 @@ export function registerPapersRoutes(
       directive: directiveRecord,
       message: `Directive recorded for paper "${p.title}". It will be applied to relevant sections on next write/rewrite.`,
     });
+  });
+
+  register('POST', /^\/api\/papers\/[^/]+\/auto-revise$/, async (req, res) => {
+    const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
+    const paperId = decodeURIComponent(parts[3]);
+    const p = ctx.papers.get(paperId);
+    if (!p) return error(res, 'Paper not found', 404);
+
+    const b = await parseBody(req);
+    const sectionIds = Array.isArray(b.sectionIds)
+      ? b.sectionIds.filter((x: unknown) => typeof x === 'string')
+      : undefined;
+    const maxPerSection = typeof b.maxPerSection === 'number' ? b.maxPerSection : undefined;
+
+    const task = taskManager.create('auto-revise', `自动定向修订 - ${p.title}`, { paperId });
+    taskManager.start(task.id);
+
+    try {
+      taskManager.updateProgress(task.id, 5, '正在聚合低分发现...');
+      const { runAutoRevision } = await import('../../pipeline/auto-revision.ts');
+      const report = await runAutoRevision(
+        {
+          bible: ctx.bible,
+          reviser: ctx.reviser,
+          hasLLMFor: ctx.hasLLMFor,
+          router: ctx.router,
+          papers: ctx.papers,
+          persistSection: ctx.persistSection,
+          updateProgress: (tid, pct, msg) => taskManager.updateProgress(tid, pct, msg),
+        },
+        { paperId, sectionIds, maxPerSection, taskId: task.id },
+      );
+      taskManager.complete(task.id, `自动定向修订完成，采纳 ${report.totalAdopted} 处`);
+      json(res, { ok: true, report });
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
+      throw e;
+    }
   });
 
   register('POST', /^\/api\/papers\/[^/]+\/rewrite$/, async (req, res) => {

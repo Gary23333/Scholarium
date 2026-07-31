@@ -702,6 +702,63 @@ export interface TextChange {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Segment Revision (片段的针对性修改)
+// ═══════════════════════════════════════════════════════════════
+
+export interface RevisePassageRequest {
+  passage: string;
+  note: string;
+  before?: string;
+  after?: string;
+}
+
+export interface ReviserInput {
+  passage: string;
+  note: string;
+  before?: string;
+  after?: string;
+  protectedBlocks: string[];
+  approvedCiteKeys: string[];
+  sectionTitle?: string;
+}
+
+export interface ReviserOutput {
+  revisedPassage: string;
+  protectedViolated: boolean;
+}
+
+export interface TargetedRevisionAction {
+  id: string;
+  sectionId: string;
+  dimension: string;
+  severity: 'critical' | 'warning' | 'info';
+  findingId?: string;
+  passage: string;
+  start: number;
+  end: number;
+  note: string;
+  reason: string;
+  status: 'pending' | 'revised' | 'adopted' | 'rejected';
+}
+
+export interface AutoRevisionSectionReport {
+  sectionId: string;
+  beforeScore: number;
+  afterScore: number;
+  actions: TargetedRevisionAction[];
+  adopted: number;
+  rejected: number;
+  report?: unknown;
+  postReport?: unknown;
+}
+
+export interface AutoRevisionReport {
+  paperId: string;
+  sections: AutoRevisionSectionReport[];
+  totalAdopted: number;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Integrity
 // ═══════════════════════════════════════════════════════════════
 

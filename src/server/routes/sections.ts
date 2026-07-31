@@ -5,8 +5,12 @@ import type { ServerContext } from '../context.ts';
 import { json, error, parseBody } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
 import { getErrorMessage } from '../../utils/logger.ts';
+import { revisePassageCore } from '../../lib/revise-passage-core.ts';
 
-type SectionsRouteContext = Pick<ServerContext, 'papers' | 'bible' | 'db' | 'router' | 'persistSection' | 'hasLLMFor'>;
+type SectionsRouteContext = Pick<
+  ServerContext,
+  'papers' | 'bible' | 'db' | 'router' | 'persistSection' | 'hasLLMFor' | 'reviser'
+>;
 
 export function registerSectionsRoutes(
   ctx: SectionsRouteContext,
@@ -229,6 +233,85 @@ Please output the modified LaTeX content for this section.`;
       ctx.persistSection(paperId, section);
       taskManager.complete(task.id, '修改完成');
       json(res, { section, modified: true });
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
+      throw e;
+    }
+  });
+
+  register('POST', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/revise-passage$/, async (req, res) => {
+    const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
+    const p = ctx.papers.get(paperId);
+    if (!p) return error(res, 'Paper not found', 404);
+    const section = p.sections.find((s) => s.id === sectionId);
+    if (!section || !section.contentTex) return error(res, 'Section content not found. Write the section first.', 404);
+    const b = await parseBody(req);
+    const passage = typeof b.passage === 'string' ? b.passage.trim() : '';
+    const note = typeof b.note === 'string' ? b.note.trim() : '';
+    if (!passage || !note) return error(res, 'passage and note are required', 400);
+
+    const task = taskManager.create('rewrite', `局部重写 - ${section.title}`, { paperId, sectionId });
+    taskManager.start(task.id);
+
+    try {
+      taskManager.updateProgress(task.id, 30, '正在组装修改上下文...');
+      const before = typeof b.before === 'string' ? b.before : undefined;
+      const after = typeof b.after === 'string' ? b.after : undefined;
+
+      taskManager.updateProgress(task.id, 60, '正在调用模型进行局部重写...');
+      const result = await revisePassageCore(
+        { bible: ctx.bible, reviser: ctx.reviser, hasLLMFor: ctx.hasLLMFor },
+        paperId,
+        section,
+        { passage, note, before, after },
+      );
+      if (!result.ok) return error(res, result.reason, 400);
+
+      taskManager.complete(task.id, result.mockMode ? '局部重写完成 (规则模式)' : '局部重写完成');
+      json(res, {
+        revised: result.revised,
+        warnings: result.warnings,
+        mockMode: result.mockMode,
+        protectedViolated: result.protectedViolated,
+        taskId: task.id,
+      });
+    } catch (e: unknown) {
+      taskManager.fail(task.id, getErrorMessage(e));
+      throw e;
+    }
+  });
+
+  register('POST', /^\/api\/papers\/[^/]+\/sections\/[^/]+\/auto-revise$/, async (req, res) => {
+    const parts = new URL(req.url ?? '/', 'http://localhost').pathname.split('/');
+    const paperId = decodeURIComponent(parts[3]);
+    const sectionId = decodeURIComponent(parts[5]);
+    const p = ctx.papers.get(paperId);
+    if (!p) return error(res, 'Paper not found', 404);
+    const section = p.sections.find((s) => s.id === sectionId);
+    if (!section || !section.contentTex) return error(res, 'Section content not found. Write the section first.', 404);
+
+    const task = taskManager.create('auto-revise', `自动定向修订 - ${section.title}`, { paperId, sectionId });
+    taskManager.start(task.id);
+
+    try {
+      taskManager.updateProgress(task.id, 5, '正在聚合低分发现...');
+      const { runAutoRevision } = await import('../../pipeline/auto-revision.ts');
+      const report = await runAutoRevision(
+        {
+          bible: ctx.bible,
+          reviser: ctx.reviser,
+          hasLLMFor: ctx.hasLLMFor,
+          router: ctx.router,
+          papers: ctx.papers,
+          persistSection: ctx.persistSection,
+          updateProgress: (tid, pct, msg) => taskManager.updateProgress(tid, pct, msg),
+        },
+        { paperId, sectionIds: [sectionId], taskId: task.id },
+      );
+      taskManager.complete(task.id, `自动定向修订完成，采纳 ${report.totalAdopted} 处`);
+      json(res, { ok: true, report });
     } catch (e: unknown) {
       taskManager.fail(task.id, getErrorMessage(e));
       throw e;
