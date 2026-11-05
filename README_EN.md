@@ -23,7 +23,7 @@
 | 🔗 **Embedding Engine** | Local TF-IDF / OpenAI / DeepSeek — citation matching + deduplication |
 | 📚 **Radar Journal Matching** | 10 built-in top venue profiles + LLM fit analysis |
 | 🌐 **API Rate Governance** | Token bucket + exponential backoff + local caching for Semantic Scholar / arXiv / CrossRef |
-| 📄 **LaTeX Output** | IEEE / ACM / Springer / Elsevier / Nature templates |
+| 📄 **LaTeX Output** | Built-in `default` (`article`) template; IEEE / ACM / Springer / Elsevier / Nature reference guides require manual adaptation |
 | 🔄 **Agent Loop Autonomy** | Agents autonomously decide: write → audit → revise → loop until passing |
 
 ---
@@ -164,7 +164,7 @@ Scholarium/
 │   └── server.ts       # Server entry point (modular orchestrator)
 ├── .github/workflows/  # CI/CD (GitHub Actions)
 ├── frontend/           # React + Vite workspace
-├── templates/          # Journal LaTeX templates
+├── templates/          # Template reference guides (no bundled .tex/.cls files)
 ├── scholarium.config.json
 └── package.json
 ```
