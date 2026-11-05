@@ -7,6 +7,7 @@ import { CartographerAgent } from '../agents/cartographer.ts';
 import type { MindMapNode, CartographerInput } from '../agents/cartographer.ts';
 import type { LLMRouter } from '../llm/router.ts';
 import { logger } from '../utils/logger.ts';
+import { createLocalSessionMiddleware } from '../server/middleware/local-session.ts';
 
 export interface MindMapSession {
   id: string;
@@ -38,17 +39,21 @@ export class MindMapServer {
   }
 
   start(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      const session = createLocalSessionMiddleware(this.options.port);
       this.server = http.createServer((req, res) => {
-        this.handleRequest(req, res).catch((err) => {
-          logger.error('[MindMap] Unhandled error:', err);
-          if (!res.headersSent) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Internal server error' }));
-          }
+        session(req, res, () => {
+          this.handleRequest(req, res).catch((err) => {
+            logger.error('[MindMap] Unhandled error:', err);
+            if (!res.headersSent) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Internal server error' }));
+            }
+          });
         });
       });
-      this.server.listen(this.options.port, () => {
+      this.server.once('error', reject);
+      this.server.listen(this.options.port, '127.0.0.1', () => {
         logger.info(`MindMap server running on http://localhost:${this.options.port}`);
         resolve();
       });
@@ -64,7 +69,6 @@ export class MindMapServer {
     const method = req.method ?? 'GET';
 
     // CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (method === 'OPTIONS') {

@@ -5,9 +5,11 @@ Thanks for your interest in contributing! Scholarium is a multi-agent academic p
 ## Getting Started
 
 1. Fork the repository and clone it locally.
-2. Install dependencies: `npm ci && cd frontend && npm ci && cd ..`
+2. Use Node.js 22.18+ and install dependencies: `npm ci && cd frontend && npm ci && cd ..`
 3. Run the type check: `npm run typecheck`
-4. Run tests: `npm run test:mock`
+4. Run offline tests: `npm test && npm run test:mock`
+5. Build both entry points: `npm run build && npm start -- --help && npm run build:frontend`
+6. Install browser dependencies once: `npx playwright install --with-deps chromium`, then run `npm run test:e2e-ui`. The browser suite uses isolated temporary data and blank provider credentials.
 
 ## Development Workflow
 
@@ -53,3 +55,14 @@ src/
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+
+## Test and configuration notes
+
+- `npm run test:e2e` is an alias for the existing Playwright suite. Obsolete scripts referencing removed test files have been removed.
+- Browser tests are headless by default. Use `PW_HEADED=1` for an interactive run, or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium` for an installed Chromium.
+- Use the Vite same-origin proxy in development. Custom local clients must first establish a cookie session through `POST /api/session` with `X-Scholarium-Client: local-ui`.
+- Do not commit `scholarium.local.json`, `.env` files, generated output, or real credentials. Tests must create their own temporary config directories.
+
+## Dependency maintenance
+
+The test runner uses Vitest 5 with Vite 6.4, and supports Node 22.18, 24, or newer supported LTS releases. `minimatch` is overridden to its patched 11.x line while the lint toolchain still requests older affected majors. Re-run lint, typecheck, and the full test suite when changing or removing that override. Production dependencies intentionally contain only packages imported by runtime code. Lockfiles use the official npm registry.

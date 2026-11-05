@@ -172,9 +172,15 @@ npm run serve
 open http://localhost:3456
 ```
 
-**无需 GPU，纯 CPU 运行。** 只需 Node.js 22+ 和一个 LLM API Key。
+**无需 GPU，纯 CPU 运行。** 只需 Node.js 22.18+ 和一个 LLM API Key。
 
----
+### 本地访问与密钥安全
+
+服务只监听 `127.0.0.1`，网页启动时会建立 HttpOnly 本地会话；重启服务后请刷新页面。禁止跨站请求和远程代理访问，不要直接公开部署。开发时运行 `npm run dev:frontend`，通过 Vite 的同源 `/api` 代理访问后端，不需要 CORS 配置。
+
+设置界面保存到被 Git 忽略的 `scholarium.local.json`（优先于配置模板，POSIX 权限为 0600），不会把密钥写回跟踪的配置文件。更换服务商 URL 时必须重新输入或清空 API key。服务商连接仅支持公网 HTTPS，不跟随重定向，本机模型可在启动前设置 `SCHOLARIUM_ALLOW_LOCAL_PROVIDERS=1`，仅放行 localhost、127.0.0.1、[::1] 的 HTTP/HTTPS，仍不允许任意内网地址。详见 [安全说明](SECURITY.md)。
+
+`npm run build` 生成 CLI 的 `dist/`，随后可运行 `npm start -- --help`。前端仍需单独执行 `npm run build:frontend`。
 
 ## 🏗️ 系统架构
 

@@ -3,6 +3,10 @@ import * as http from 'node:http';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { createDefaultConfig } from './config/default.ts';
+
+let sessionCookie = '';
+
 import { ScholariumAPI } from './server.ts';
 import { getErrorMessage } from './utils/logger.ts';
 
@@ -32,6 +36,7 @@ function fetchJson(
         method: opts?.method ?? 'GET',
         headers: {
           'Content-Type': 'application/json',
+          Cookie: sessionCookie,
           ...((opts?.headers as Record<string, string>) ?? {}),
         },
       },
@@ -70,7 +75,10 @@ async function main() {
 
   let api: ScholariumAPI;
   try {
-    api = new ScholariumAPI({ port, dataDir });
+    const config = createDefaultConfig(dataDir);
+    for (const provider of Object.values(config.llm.providers)) provider.apiKey = '';
+    fs.writeFileSync(path.join(dataDir, 'scholarium.config.json'), JSON.stringify(config));
+    api = new ScholariumAPI({ port, dataDir, configDir: dataDir });
     await api.start();
     console.log(`Server started on port ${port}\n`);
   } catch (e: unknown) {
@@ -79,6 +87,11 @@ async function main() {
   }
 
   const base = `http://127.0.0.1:${port}`;
+  const session = await fetch(`${base}/api/session`, {
+    method: 'POST',
+    headers: { 'X-Scholarium-Client': 'local-ui' },
+  });
+  sessionCookie = session.headers.get('set-cookie')!.split(';')[0];
 
   try {
     console.log('--- Health Endpoints ---');
@@ -158,7 +171,7 @@ async function main() {
     console.log('\n--- CORS Headers ---');
     {
       const r = await fetchJson(`${base}/api/health`);
-      assert(r.headers['access-control-allow-origin'] === '*', 'CORS header present on responses');
+      assert(r.headers['access-control-allow-origin'] === undefined, 'No cross-origin access on responses');
     }
   } catch (e: unknown) {
     console.error(`\nTest execution error: ${getErrorMessage(e)}`);

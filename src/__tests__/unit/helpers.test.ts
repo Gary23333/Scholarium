@@ -58,7 +58,7 @@ describe('json()', () => {
     json(res, { hello: 'world' });
     expect(res._statusCode).toBe(200);
     expect(res._headers['Content-Type']).toBe('application/json');
-    expect(res._headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(res._headers['Access-Control-Allow-Origin']).toBeUndefined();
     expect(JSON.parse(res._body)).toEqual({ hello: 'world' });
   });
 

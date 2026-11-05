@@ -14,6 +14,8 @@ const AI_CONTENT =
 let paperId = '';
 
 async function seedPaper(request: APIRequestContext): Promise<void> {
+  const session = await request.post('/api/session', { headers: { 'X-Scholarium-Client': 'local-ui' } });
+  expect(session.ok()).toBeTruthy();
   const paperRes = await request.post('/api/papers', {
     data: { title: `e2e-${Date.now()}`, researchTopic: '多智能体论文写作' },
   });

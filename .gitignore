@@ -30,3 +30,9 @@ playwright-report/
 .DS_Store
 Thumbs.db
 .data-test/
+
+# Runtime provider credentials (the tracked config is a template only)
+scholarium.local.json
+scholarium.local.json.*.tmp
+.env.*
+!.env.example

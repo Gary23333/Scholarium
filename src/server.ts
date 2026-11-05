@@ -35,7 +35,7 @@ import type { MindMapNode } from './agents/cartographer.ts';
 import { handleRouteError } from './server/middleware/error-handler.ts';
 import { corsMiddleware, handlePreflight } from './server/middleware/cors.ts';
 import { loggerMiddleware } from './server/middleware/logger.ts';
-import { getCorsOrigin } from './server/utils/helpers.ts';
+import { createLocalSessionMiddleware } from './server/middleware/local-session.ts';
 import { registerLlmRoutes } from './server/routes/llm.ts';
 import { registerMindmapRoutes } from './server/routes/mindmap.ts';
 import { registerPapersRoutes } from './server/routes/papers.ts';
@@ -84,13 +84,13 @@ export class ScholariumAPI {
   private server: http.Server | null = null;
   private ctx: ServerContext;
   private routes: RouteEntry[] = [];
-  private opts: { port: number; dataDir: string; staticDir?: string };
+  private opts: { port: number; dataDir: string; staticDir?: string; configDir?: string };
 
-  constructor(opts: { port: number; dataDir: string; staticDir?: string }) {
+  constructor(opts: { port: number; dataDir: string; staticDir?: string; configDir?: string }) {
     this.opts = opts;
     fs.mkdirSync(opts.dataDir, { recursive: true });
 
-    const config = loadConfig({ cwd: process.cwd(), allowMissing: true });
+    const config = loadConfig({ cwd: opts.configDir ?? process.cwd(), allowMissing: true });
     const router = new LLMRouter(config);
     const db = new ScholariumDB(path.join(opts.dataDir, 'scholarium.json'));
     const bible = new BibleManager(db);
@@ -139,6 +139,7 @@ export class ScholariumAPI {
       config,
       router,
       dataDir: opts.dataDir,
+      configDir: opts.configDir ?? process.cwd(),
       port: opts.port,
       staticDir: opts.staticDir,
       mmSessions: new Map<string, MindMapSession>(),
@@ -284,16 +285,20 @@ export class ScholariumAPI {
   }
 
   start(): Promise<void> {
-    return new Promise((resolve) => {
-      const chain = composeMiddleware([corsMiddleware, loggerMiddleware], (req, res) => {
-        if (handlePreflight(req, res)) return;
-        this.dispatch(req, res).catch((e: Error) => {
-          handleRouteError(e, res);
-        });
-      });
+    return new Promise((resolve, reject) => {
+      const chain = composeMiddleware(
+        [createLocalSessionMiddleware(this.opts.port), corsMiddleware, loggerMiddleware],
+        (req, res) => {
+          if (handlePreflight(req, res)) return;
+          this.dispatch(req, res).catch((e: Error) => {
+            handleRouteError(e, res);
+          });
+        },
+      );
       this.server = http.createServer(chain);
-      this.server.listen(this.opts.port, '0.0.0.0', () => {
-        logger.info(`API: http://0.0.0.0:${this.opts.port}`);
+      this.server.once('error', reject);
+      this.server.listen(this.opts.port, '127.0.0.1', () => {
+        logger.info(`API: http://127.0.0.1:${this.opts.port}`);
         resolve();
       });
     });
@@ -322,8 +327,7 @@ export class ScholariumAPI {
       }
     }
 
-    const CORS_ORIGIN = getCorsOrigin();
-    res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN });
+    res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not found', code: 404 }));
   }
 }

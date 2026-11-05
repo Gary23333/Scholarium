@@ -3,6 +3,9 @@ import * as http from 'node:http';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { createDefaultConfig } from '../../config/default.ts';
+
+let sessionCookie = '';
 
 vi.mock('../../utils/logger.js', () => ({
   logger: {
@@ -53,6 +56,7 @@ function fetchJson(url: string, opts?: RequestInit): Promise<{ status: number; d
         method: opts?.method ?? 'GET',
         headers: {
           'Content-Type': 'application/json',
+          Cookie: sessionCookie,
           ...((opts?.headers as Record<string, string>) ?? {}),
         },
       },
@@ -83,9 +87,17 @@ describe('Server Routes (Integration)', () => {
     port = await getFreePort();
     const dataDir = path.join(os.tmpdir(), `scholarium-integration-${Date.now()}`);
     fs.mkdirSync(dataDir, { recursive: true });
-    api = new ScholariumAPI({ port, dataDir });
+    const config = createDefaultConfig(dataDir);
+    for (const provider of Object.values(config.llm.providers)) provider.apiKey = '';
+    fs.writeFileSync(path.join(dataDir, 'scholarium.config.json'), JSON.stringify(config));
+    api = new ScholariumAPI({ port, dataDir, configDir: dataDir });
     await api.start();
     baseUrl = `http://127.0.0.1:${port}`;
+    const session = await fetch(`${baseUrl}/api/session`, {
+      method: 'POST',
+      headers: { 'X-Scholarium-Client': 'local-ui' },
+    });
+    sessionCookie = session.headers.get('set-cookie')!.split(';')[0];
   }, 30000);
 
   afterAll(() => {

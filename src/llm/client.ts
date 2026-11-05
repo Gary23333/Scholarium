@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { logger } from '../utils/logger.ts';
+import { providerRequest, validateProviderUrl } from './safe-request.ts';
 // Scholarium LLM Client — OpenAI-compatible protocol with retry
 export interface LLMClientConfig {
   apiKey: string;
@@ -27,6 +28,7 @@ export class LLMClient {
   private config: Required<LLMClientConfig>;
 
   constructor(config: LLMClientConfig) {
+    validateProviderUrl(config.baseUrl);
     this.config = {
       apiKey: config.apiKey,
       baseUrl: config.baseUrl.replace(/\/+$/, ''),
@@ -62,9 +64,8 @@ export class LLMClient {
       const timer = setTimeout(() => controller.abort(), timeout);
 
       try {
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.config.apiKey}` },
+        const resp = await providerRequest(url, {
+          apiKey: this.config.apiKey,
           body: JSON.stringify(body),
           signal: controller.signal,
         });
@@ -86,16 +87,14 @@ export class LLMClient {
 
         // Retry on 429 (rate limit) and 5xx (server error)
         if (resp.status === 429 || resp.status >= 500) {
-          const errText = await resp.text();
-          lastError = new Error(`LLM API ${resp.status}: ${errText.substring(0, 200)}`);
+          lastError = new Error(`LLM API ${resp.status}`);
           clearTimeout(timer);
           continue;
         }
 
         // Non-retryable error
-        const errText = await resp.text();
         clearTimeout(timer);
-        throw new Error(`LLM API error ${resp.status}: ${errText.substring(0, 500)}`);
+        throw new Error(`LLM API error ${resp.status}`);
       } catch (err: any) {
         clearTimeout(timer);
         if (err.name === 'AbortError') {
@@ -104,7 +103,7 @@ export class LLMClient {
         }
         // Network errors are retryable
         if (
-          err.message?.includes('fetch failed') ||
+          err.message?.includes('Provider request failed') ||
           err.message?.includes('ECONNRESET') ||
           err.message?.includes('ETIMEDOUT')
         ) {

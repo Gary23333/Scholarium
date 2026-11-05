@@ -56,12 +56,8 @@ function getLocalIPs(): Set<string> {
   return _localIPs;
 }
 
-export function getCorsOrigin(): string {
-  return process.env.CORS_ORIGIN || '*';
-}
-
 export function json(res: ServerResponse, data: any, status = 200) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': getCorsOrigin() });
+  res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
 }
 

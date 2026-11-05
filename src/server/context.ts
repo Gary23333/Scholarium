@@ -65,6 +65,7 @@ export interface ServerContext {
   config: ScholariumConfig;
   router: LLMRouter;
   dataDir: string;
+  configDir: string;
   port: number;
   staticDir?: string;
 

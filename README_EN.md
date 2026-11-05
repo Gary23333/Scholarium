@@ -49,9 +49,15 @@ npm run serve
 open http://localhost:3456
 ```
 
-**No GPU required.** Only Node.js 22+ and an LLM API key.
+**No GPU required.** Only Node.js 22.18+ and an LLM API key.
 
----
+### Local access and credentials
+
+The server binds to `127.0.0.1`. The web app establishes an HttpOnly local session before loading API data; reload the page after restarting the server. Cross-origin requests and remote proxies are rejected. Do not publish this server. For frontend development, use `npm run dev:frontend` and its same-origin `/api` proxy rather than enabling CORS.
+
+UI settings are saved to the Git-ignored `scholarium.local.json` override (0600 on POSIX), not the tracked template. Changing a provider URL requires replacing or clearing its API key. Providers must use public HTTPS endpoints; redirects and private-network providers are blocked. To use a trusted local model server, set `SCHOLARIUM_ALLOW_LOCAL_PROVIDERS=1` before startup; this allows HTTP/HTTPS only on `localhost`, `127.0.0.1`, or `[::1]`. See [the security policy](SECURITY.md).
+
+`npm run build` produces the CLI in `dist/`; verify with `npm start -- --help`. Build the web app separately with `npm run build:frontend`.
 
 ## 🏗️ Architecture
 

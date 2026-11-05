@@ -49,7 +49,7 @@ describe('corsMiddleware', () => {
       nextCalled = true;
     });
 
-    expect(res._headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(res._headers['Access-Control-Allow-Origin']).toBeUndefined();
     expect(res._headers['Access-Control-Allow-Methods']).toBe('GET, POST, PUT, DELETE, OPTIONS');
     expect(res._headers['Access-Control-Allow-Headers']).toBe('Content-Type');
     expect(nextCalled).toBe(true);

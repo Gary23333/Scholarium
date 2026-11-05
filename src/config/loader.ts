@@ -1,5 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { validateProviderUrl } from '../llm/safe-request.ts';
 import type { ScholariumConfig } from '../types/index.ts';
 import { createDefaultConfig, DEFAULT_AGENT_MODELS } from './default.ts';
 
@@ -15,7 +17,12 @@ export interface ConfigValidationResult {
   warnings: string[];
 }
 
-const CONFIG_FILENAMES = ['scholarium.config.json', 'scholarium.json', 'config/scholarium.json'];
+const CONFIG_FILENAMES = [
+  'scholarium.local.json',
+  'scholarium.config.json',
+  'scholarium.json',
+  'config/scholarium.json',
+];
 
 export function findConfigFile(cwd = process.cwd()): string | null {
   for (const name of CONFIG_FILENAMES) {
@@ -29,12 +36,15 @@ export function loadConfig(options: ConfigLoadOptions = {}): ScholariumConfig {
   const cwd = options.cwd ?? process.cwd();
   const configPath = options.configPath ? path.resolve(cwd, options.configPath) : findConfigFile(cwd);
   if (!configPath) {
-    if (options.allowMissing ?? true) return createDefaultConfig(cwd);
+    if (options.allowMissing ?? true) return resolveEnvPlaceholders(createDefaultConfig(cwd));
     throw new Error(`Config file not found in ${cwd}`);
   }
 
   const raw = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-  const merged = mergeConfig(createDefaultConfig(path.dirname(configPath)), resolveEnvPlaceholders(raw));
+  const merged = mergeConfig(
+    resolveEnvPlaceholders(createDefaultConfig(path.dirname(configPath))),
+    resolveEnvPlaceholders(raw),
+  );
   const validation = validateConfig(merged);
   if (!validation.ok) throw new Error(`Invalid Scholarium config: ${validation.errors.join('; ')}`);
   return merged;
@@ -43,12 +53,18 @@ export function loadConfig(options: ConfigLoadOptions = {}): ScholariumConfig {
 export function writeDefaultConfig(filePath: string): void {
   const config = createDefaultConfig(path.dirname(path.resolve(filePath)));
   fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(config, null, 2), 'utf-8');
+  fs.writeFileSync(filePath, JSON.stringify(config, null, 2), { encoding: 'utf-8', mode: 0o600 });
 }
 
 export function saveConfig(config: ScholariumConfig, cwd = process.cwd()): void {
-  const configPath = findConfigFile(cwd) || path.resolve(cwd, 'scholarium.config.json');
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  const configPath = path.resolve(cwd, 'scholarium.local.json');
+  const temporaryPath = `${configPath}.${randomUUID()}.tmp`;
+  try {
+    fs.writeFileSync(temporaryPath, JSON.stringify(config, null, 2), { encoding: 'utf-8', mode: 0o600 });
+    fs.renameSync(temporaryPath, configPath);
+  } finally {
+    fs.rmSync(temporaryPath, { force: true });
+  }
 }
 
 export function validateConfig(config: ScholariumConfig): ConfigValidationResult {
@@ -58,6 +74,18 @@ export function validateConfig(config: ScholariumConfig): ConfigValidationResult
   if (!config.paths?.root) errors.push('paths.root is required');
   if (!config.llm?.models || Object.keys(config.llm.models).length === 0) {
     errors.push('llm.models must define at least one agent route');
+  }
+  for (const [name, provider] of Object.entries(config.llm?.providers ?? {})) {
+    if (provider.apiKey !== undefined && typeof provider.apiKey !== 'string') {
+      errors.push(`llm.providers.${name}.apiKey must be a string`);
+    }
+    try {
+      validateProviderUrl(provider.baseUrl ?? '');
+    } catch {
+      errors.push(
+        `llm.providers.${name}.baseUrl must be a public HTTPS endpoint without credentials, query or fragment`,
+      );
+    }
   }
   for (const [agent, route] of Object.entries(config.llm.models ?? {})) {
     if (!route.model) errors.push(`llm.models.${agent}.model is required`);

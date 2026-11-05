@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'chore/**']
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -36,3 +39,9 @@ jobs:
         run: npm run test:mock
       - name: Vitest tests
         run: npx vitest run
+      - name: Build CLI
+        run: npm run build && npm start -- --help
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser regression tests (offline providers)
+        run: npm run test:e2e-ui

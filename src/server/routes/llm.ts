@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { LLMClient } from '../../llm/client.ts';
+import { providerRequest, validateProviderUrl } from '../../llm/safe-request.ts';
 import { saveConfig, validateConfig } from '../../config/index.ts';
 import type { ScholariumConfig } from '../../types/index.ts';
 import type { ServerContext } from '../context.ts';
-import { json, error, parseBody, isSafeUrl } from '../utils/helpers.ts';
+import { json, error, parseBody } from '../utils/helpers.ts';
 import { taskManager } from '../../task-manager.ts';
 import { getErrorMessage } from '../../utils/logger.ts';
 
-type LlmRouteContext = Pick<ServerContext, 'config' | 'router' | 'hasLLMFor'>;
+type LlmRouteContext = Pick<ServerContext, 'config' | 'router' | 'hasLLMFor' | 'configDir'>;
 
 function maskConfig(config: ScholariumConfig): ScholariumConfig {
   return {
@@ -35,6 +36,11 @@ export function registerLlmRoutes(
 ): void {
   register('POST', '/api/llm/test', async (req, res) => {
     const { baseUrl, apiKey, model } = await parseBody(req);
+    try {
+      validateProviderUrl(baseUrl);
+    } catch {
+      return error(res, 'Invalid provider URL', 400);
+    }
     if (!apiKey) return json(res, { ok: false, error: 'apiKey is required' }, 400);
     try {
       const client = new LLMClient({ apiKey, baseUrl, model, maxTokens: 30, timeout: 15000, maxRetries: 1 });
@@ -56,11 +62,10 @@ export function registerLlmRoutes(
 
     for (const [name, provider] of Object.entries(ctx.config.llm.providers)) {
       if (!provider.apiKey || !provider.baseUrl) continue;
-      if (!isSafeUrl(provider.baseUrl)) continue;
       try {
         const url = provider.baseUrl.replace(/\/+$/, '') + '/models';
-        const fetchRes = await fetch(url, {
-          headers: { Authorization: `Bearer ${provider.apiKey}`, 'Content-Type': 'application/json' },
+        const fetchRes = await providerRequest(url, {
+          apiKey: provider.apiKey,
           signal: AbortSignal.timeout(5000),
         });
         if (fetchRes.ok) {
@@ -86,12 +91,21 @@ export function registerLlmRoutes(
 
   register('POST', '/api/llm/config', async (req, res) => {
     const body = await parseBody(req);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return error(res, 'Expected a config object', 400);
 
-    const mergedProviders: ScholariumConfig['llm']['providers'] = {};
+    const mergedProviders: ScholariumConfig['llm']['providers'] = Object.create(null);
     const allProviderKeys = new Set([...Object.keys(ctx.config.llm.providers), ...Object.keys(body.providers ?? {})]);
     for (const key of allProviderKeys) {
       const existing = ctx.config.llm.providers[key] ?? {};
       const incoming = (body.providers ?? {})[key] ?? {};
+      if (
+        incoming.baseUrl !== undefined &&
+        incoming.baseUrl !== existing.baseUrl &&
+        existing.apiKey &&
+        (incoming.apiKey === undefined || incoming.apiKey === '***configured***')
+      ) {
+        return error(res, 'Changing a provider URL requires an explicit replacement API key (or an empty key)', 400);
+      }
       mergedProviders[key] = {
         baseUrl: incoming.baseUrl ?? existing.baseUrl ?? '',
         apiKey:
@@ -116,21 +130,26 @@ export function registerLlmRoutes(
     };
     const validation = validateConfig(nextConfig);
     if (!validation.ok) return json(res, validation, 400);
+    saveConfig(nextConfig, ctx.configDir);
     ctx.config = nextConfig;
     ctx.router.updateConfig(nextConfig);
-    saveConfig(nextConfig);
     json(res, { ok: true, config: maskConfig(ctx.config), validation });
   });
 
   register('POST', '/api/llm/provider-models', async (req, res) => {
     const { baseUrl, apiKey } = await parseBody(req);
-    if (!isSafeUrl(baseUrl)) return json(res, { ok: false, error: 'URL is not allowed' }, 400);
+    try {
+      validateProviderUrl(baseUrl);
+    } catch {
+      return error(res, 'Invalid provider URL', 400);
+    }
     try {
       const url = baseUrl.replace(/\/+$/, '') + '/models';
-      const fetchRes = await fetch(url, {
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      const fetchRes = await providerRequest(url, {
+        apiKey,
+        signal: AbortSignal.timeout(5000),
       });
-      if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status} ${fetchRes.statusText}`);
+      if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status}`);
       const data = (await fetchRes.json()) as any;
       const models = (data.data ?? data.models ?? []).map((m: any) => m.id ?? m).filter(Boolean);
       json(res, { ok: true, models });
